@@ -149,7 +149,7 @@ export function Landing() {
             Book Your Install <ArrowRight className="w-4 h-4" />
           </a>
           <a
-            href="tel:+18185550100"
+            href="tel:+18186006825"
             className="inline-flex items-center gap-2 text-[#0071e3] px-7 py-3.5 rounded-full text-[16px] font-medium hover:bg-[#0071e3]/5 transition-colors border border-[#0071e3]/20"
           >
             <Phone className="w-4 h-4" /> Call Us
@@ -325,10 +325,10 @@ export function Landing() {
           </p>
           <div className="flex justify-center gap-4 mb-8">
             <a
-              href="tel:+18185550100"
+              href="tel:+18186006825"
               className="inline-flex items-center gap-2 bg-white text-[#1d1d1f] px-7 py-3.5 rounded-full text-[16px] font-medium hover:bg-white/90 transition-colors"
             >
-              <Phone className="w-4 h-4" /> (818) 555-0100
+              <Phone className="w-4 h-4" /> (818) 600-6825
             </a>
             <a
               href="mailto:hello@simplyai.tech"
@@ -354,7 +354,7 @@ export function Landing() {
             <p className="text-[12px] text-[#86868b] mt-0.5">AI setup for everyone. Los Angeles & remote.</p>
           </div>
           <div className="flex items-center gap-6">
-            <a href="tel:+18185550100" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">(818) 555-0100</a>
+            <a href="tel:+18186006825" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">(818) 600-6825</a>
             <a href="mailto:hello@simplyai.tech" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">hello@simplyai.tech</a>
           </div>
         </div>
