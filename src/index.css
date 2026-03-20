@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: #fafafa;
+  color: #1d1d1f;
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: rgba(0, 113, 227, 0.12);
+}
