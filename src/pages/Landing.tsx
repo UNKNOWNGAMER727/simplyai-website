@@ -12,6 +12,7 @@ const tiers = [
   {
     name: 'Basic',
     price: 300,
+    slug: 'basic-ai-setup-300',
     desc: 'Get started with AI on your computer.',
     features: [
       'Perplexity AI installed & configured',
@@ -24,6 +25,7 @@ const tiers = [
   {
     name: 'Pro',
     price: 500,
+    slug: 'pro-ai-setup-500',
     desc: 'The full AI experience, personalized for you.',
     popular: true,
     features: [
@@ -39,6 +41,7 @@ const tiers = [
   {
     name: 'Premium',
     price: 1000,
+    slug: 'premium-ai-setup-1000',
     desc: 'Complete AI transformation for your life.',
     features: [
       'Everything in Pro',
@@ -277,7 +280,9 @@ export function Landing() {
                 {tier.desc}
               </p>
               <a
-                href="#book"
+                href={`https://cal.com/simplytech.ai/${tier.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`block text-center py-2.5 rounded-full text-[14px] font-medium mb-6 transition-colors ${
                   tier.popular
                     ? 'bg-[#0071e3] text-white hover:bg-[#0077ED]'
@@ -337,11 +342,24 @@ export function Landing() {
               <Mail className="w-4 h-4" /> hello@simplyai.tech
             </a>
           </div>
-          {/* Cal.com embed will go here */}
-          <div className="bg-white/[0.06] rounded-2xl p-8 max-w-lg mx-auto border border-white/[0.08]">
-            <Calendar className="w-10 h-10 text-white/20 mx-auto mb-3" strokeWidth={1.2} />
-            <p className="text-[15px] text-white/40">Online booking coming soon</p>
-            <p className="text-[13px] text-white/25 mt-1">Call or email to schedule your install</p>
+          <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
+            {[
+              { name: 'Basic', price: '$300', slug: 'basic-ai-setup-300', time: '60 min' },
+              { name: 'Pro', price: '$500', slug: 'pro-ai-setup-500', time: '90 min' },
+              { name: 'Premium', price: '$1,000', slug: 'premium-ai-setup-1000', time: '3 hrs' },
+            ].map((tier) => (
+              <a
+                key={tier.name}
+                href={`https://cal.com/simplytech.ai/${tier.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl p-5 text-center transition-all duration-300"
+              >
+                <p className="text-[20px] font-semibold text-white">{tier.price}</p>
+                <p className="text-[13px] text-white/50 mt-1">{tier.name} · {tier.time}</p>
+                <p className="text-[12px] text-[#0071e3] mt-2 font-medium">Book Now</p>
+              </a>
+            ))}
           </div>
         </motion.div>
       </section>
