@@ -73,7 +73,7 @@ export async function listIssues(filters?: {
   );
 }
 
-/** Create a new task/issue */
+/** Create a new task/issue (always set to 'todo' so agents pick it up) */
 export async function createIssue(data: {
   title: string;
   description: string;
@@ -82,7 +82,7 @@ export async function createIssue(data: {
 }): Promise<PaperclipIssue> {
   return apiFetch<PaperclipIssue>(`/companies/${COMPANY_ID}/issues`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, status: 'todo' }),
   });
 }
 

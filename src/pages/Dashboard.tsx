@@ -7,6 +7,7 @@ import { Bookings } from '../components/dashboard/Bookings';
 import { Calls } from '../components/dashboard/Calls';
 import { AITeam } from '../components/dashboard/AITeam';
 import { Revenue } from '../components/dashboard/Revenue';
+import { Calendar } from '../components/dashboard/Calendar';
 
 // ── Tab config ─────────────────────────────────────────────────────────────
 
@@ -19,10 +20,11 @@ interface TabConfig {
 
 const TABS: readonly TabConfig[] = [
   { id: 'overview', label: 'Overview', badge: false, component: Overview },
-  { id: 'clients', label: 'Clients', badge: false, component: Clients },
-  { id: 'leads', label: 'Leads', badge: true, component: Leads },
+  { id: 'calendar', label: 'Calendar', badge: false, component: Calendar },
   { id: 'bookings', label: 'Bookings', badge: true, component: Bookings },
+  { id: 'leads', label: 'Leads', badge: true, component: Leads },
   { id: 'calls', label: 'Calls', badge: true, component: Calls },
+  { id: 'clients', label: 'Clients', badge: false, component: Clients },
   { id: 'ai-team', label: 'AI Team', badge: false, component: AITeam },
   { id: 'revenue', label: 'Revenue', badge: false, component: Revenue },
 ] as const;
