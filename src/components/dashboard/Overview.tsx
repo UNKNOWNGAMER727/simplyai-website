@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+// framer-motion removed — was causing opacity:0 stuck state with async data
 import { CalendarDays, Zap, Send, Star, Loader2, RefreshCw } from 'lucide-react';
 import { bookings as mockBookings, activityFeed as mockActivity } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
@@ -80,11 +80,6 @@ function buildActivity(issues: PaperclipIssue[], agents: PaperclipAgent[]): Acti
   return items.slice(0, 12);
 }
 
-const staggerContainer = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
-};
 
 export function Overview() {
   const [busy, setBusy] = useState<string | null>(null);
@@ -195,9 +190,9 @@ export function Overview() {
   };
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8">
+    <div className="space-y-8">
       {/* Quick Actions */}
-      <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={() => handleQuickAction('schedule-day')}
           disabled={busy !== null}
@@ -230,36 +225,36 @@ export function Overview() {
           {busy === 'review-check' ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} />}
           Check Reviews
         </button>
-      </motion.div>
+      </div>
 
       {/* Metric Cards */}
-      <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {metricCards.map((card) => (
-          <motion.div
+          <div
             key={card.label}
-            variants={fadeUp}
+           
             className="rounded-2xl px-5 py-6 text-center bg-[#1a1a1a]"
           >
             <p className="text-3xl font-bold" style={{ color: card.color }}>
               {loading ? '—' : card.value}
             </p>
             <p className="mt-1 text-sm text-neutral-400">{card.label}</p>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Today's Agenda */}
-        <motion.div variants={fadeUp}>
+        <div>
           <h2 className="mb-4 text-lg font-semibold text-white">Today's Agenda</h2>
           <div className="space-y-3">
             {todayBookings.length === 0 && !loading && (
               <p className="text-sm text-neutral-500">No appointments today.</p>
             )}
             {todayBookings.map((b) => (
-              <motion.div
+              <div
                 key={b.id}
-                variants={fadeUp}
+               
                 className="flex items-center justify-between rounded-xl px-5 py-4 bg-[#1a1a1a]"
               >
                 <div className="flex items-center gap-4">
@@ -281,13 +276,13 @@ export function Overview() {
                 >
                   {b.status}
                 </span>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Activity Feed */}
-        <motion.div variants={fadeUp}>
+        <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Activity Feed</h2>
             {agents.length > 0 && (
@@ -301,9 +296,9 @@ export function Overview() {
           </div>
           <div className="space-y-2">
             {activity.map((event) => (
-              <motion.div
+              <div
                 key={event.id}
-                variants={fadeUp}
+               
                 className="flex items-start gap-3 rounded-xl px-4 py-3 bg-[#1a1a1a]"
               >
                 <span
@@ -317,11 +312,11 @@ export function Overview() {
                 <span className="shrink-0 text-xs text-neutral-600">
                   {formatTime(event.timestamp)}
                 </span>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

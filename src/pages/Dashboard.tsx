@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import type { ReactElement } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Overview } from '../components/dashboard/Overview';
 import { Clients } from '../components/dashboard/Clients';
 import { Leads } from '../components/dashboard/Leads';
@@ -108,17 +107,7 @@ export function Dashboard() {
 
       {/* ── Tab content ───────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ActiveComponent />
-          </motion.div>
-        </AnimatePresence>
+        <ActiveComponent key={activeTab} />
       </main>
     </div>
   );
