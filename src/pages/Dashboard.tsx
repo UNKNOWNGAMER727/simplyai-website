@@ -108,7 +108,7 @@ export function Dashboard() {
 
       {/* ── Tab content ───────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 6 }}

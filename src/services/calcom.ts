@@ -30,8 +30,8 @@ export interface CalComEventType {
   readonly id: number;
   readonly title: string;
   readonly slug: string;
-  readonly length: number;
-  readonly price: number;
+  readonly lengthInMinutes: number;
+  readonly ownerId: number;
 }
 
 // ── Tier mapping ──────────────────────────────────────────────────────────
@@ -44,11 +44,11 @@ const TIER_MAP: Record<string, { tier: 'basic' | 'pro' | 'premium'; price: numbe
 
 // ── API Functions ──────────────────────────────────────────────────────────
 
-async function apiFetch<T>(path: string): Promise<T> {
+async function apiFetch<T>(path: string, apiVersion = '2024-08-13'): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: {
       Authorization: `Bearer ${API_KEY}`,
-      'cal-api-version': '2024-08-13',
+      'cal-api-version': apiVersion,
       'Content-Type': 'application/json',
     },
   });
@@ -66,7 +66,7 @@ export async function fetchBookings(): Promise<CalComBooking[]> {
 
 /** Fetch event types to map slugs → tiers */
 export async function fetchEventTypes(): Promise<CalComEventType[]> {
-  return apiFetch<CalComEventType[]>('/event-types');
+  return apiFetch<CalComEventType[]>('/event-types', '2024-06-14');
 }
 
 /** Convert a Cal.com booking to our CRM Booking type */
@@ -95,7 +95,7 @@ export function toBooking(
     price: tierInfo.price,
     date: startDate.toISOString().split('T')[0],
     time: startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    duration: b.duration ?? eventType?.length ?? 60,
+    duration: b.duration ?? eventType?.lengthInMinutes ?? 60,
     location: b.meetingUrl ? 'remote' : 'in-person',
     address: b.location && !b.meetingUrl ? b.location : null,
     status: statusMap[b.status] ?? 'pending',
