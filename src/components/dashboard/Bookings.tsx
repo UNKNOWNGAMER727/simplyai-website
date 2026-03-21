@@ -57,7 +57,6 @@ function filterBookings(bookings: readonly Booking[], filter: FilterKey): Bookin
 
 function BookingRow({ booking }: { booking: Booking }) {
   const [expanded, setExpanded] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
   const { toast } = useToast();
 
   const tierStyle = TIER_COLORS[booking.tier];
