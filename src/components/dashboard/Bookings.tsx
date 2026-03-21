@@ -247,8 +247,17 @@ export function Bookings() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [allBookings, setAllBookings] = useState<Booking[]>(mockBookings);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('hidden-bookings') || '[]')); }
+    catch { return new Set(); }
+  });
   const [dataSource, setDataSource] = useState<'loading' | 'live' | 'mock'>('loading');
   const { toast } = useToast();
+
+  const persistHidden = (ids: Set<string>) => {
+    setHiddenIds(ids);
+    localStorage.setItem('hidden-bookings', JSON.stringify([...ids]));
+  };
 
   const loadRealBookings = useCallback(async () => {
     try {
@@ -260,7 +269,6 @@ export function Bookings() {
         setAllBookings(rawBookings.map((b) => toBooking(b, eventTypes)));
         setDataSource('live');
       } else {
-        // No real bookings yet — show mock data
         setAllBookings(mockBookings);
         setDataSource('mock');
       }
@@ -274,7 +282,8 @@ export function Bookings() {
     loadRealBookings();
   }, [loadRealBookings]);
 
-  const filtered = filterBookings(allBookings, activeFilter);
+  const visibleBookings = allBookings.filter(b => !hiddenIds.has(b.id));
+  const filtered = filterBookings(visibleBookings, activeFilter);
 
   return (
     <div className="space-y-4">
@@ -346,7 +355,11 @@ export function Bookings() {
         ) : (
           <AnimatePresence mode="popLayout">
             {filtered.map((booking) => (
-              <BookingRow key={booking.id} booking={booking} onRemove={(id) => setAllBookings(prev => prev.filter(b => b.id !== id))} />
+              <BookingRow key={booking.id} booking={booking} onRemove={(id) => {
+                const next = new Set(hiddenIds);
+                next.add(id);
+                persistHidden(next);
+              }} />
             ))}
           </AnimatePresence>
         )}
