@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, X, Phone, Mail, Calendar, MessageSquare, ChevronRight,
-  Send, Link2, UserPlus,
+  Send, Link2, UserPlus, Trash2, RefreshCw,
 } from 'lucide-react';
-import { leads } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
 import ActionButton from '../ui/ActionButton';
 import { EmptyState } from '../ui/EmptyState';
@@ -47,7 +46,7 @@ function LeadCard({ lead, column, onClick }: { lead: Lead; column: typeof COLUMN
   );
 }
 
-function LeadDetailPanel({ lead, column, onClose }: { lead: Lead; column: typeof COLUMNS[number]; onClose: () => void }) {
+function LeadDetailPanel({ lead, column, onClose, onDelete }: { lead: Lead; column: typeof COLUMNS[number]; onClose: () => void; onDelete: (id: string) => void }) {
   const { toast } = useToast();
 
   const makeAction = (action: string) => async () => {
@@ -192,6 +191,16 @@ function LeadDetailPanel({ lead, column, onClose }: { lead: Lead; column: typeof
             className="flex-1 justify-center"
           />
         </div>
+        <div className="px-5 pb-5">
+          <ActionButton
+            onClick={async () => { onDelete(lead.id); onClose(); toast(`Lead "${lead.name}" deleted`); }}
+            icon={<Trash2 size={14} />}
+            label="Delete Lead"
+            variant="danger"
+            size="md"
+            className="w-full justify-center"
+          />
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -202,18 +211,32 @@ export function Leads() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLead, setNewLead] = useState({ name: '', phone: '', email: '', source: '', interest: '' });
   const [saving, setSaving] = useState(false);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
   const { toast } = useToast();
+
+  const loadLeads = useCallback(async () => {
+    try {
+      const res = await fetch('/webhook-api/leads');
+      if (res.ok) setAllLeads(await res.json());
+    } catch { /* webhook server might not be running */ }
+  }, []);
+
+  useEffect(() => {
+    loadLeads();
+    const interval = setInterval(loadLeads, 15000);
+    return () => clearInterval(interval);
+  }, [loadLeads]);
 
   const grouped = useMemo(() => {
     const map: Record<KanbanColumn, Lead[]> = { new: [], contacted: [], booked: [], completed: [] };
-    for (const lead of leads) {
+    for (const lead of allLeads) {
       const col = COLUMNS.find(c => c.statuses.includes(lead.status));
       if (col) {
         map[col.key].push(lead);
       }
     }
     return map;
-  }, []);
+  }, [allLeads]);
 
   const allEmpty = COLUMNS.every(col => grouped[col.key].length === 0);
 
@@ -221,10 +244,28 @@ export function Leads() {
     ? COLUMNS.find(c => c.statuses.includes(selectedLead.status)) ?? COLUMNS[0]
     : COLUMNS[0];
 
+  const handleDeleteLead = async (id: string) => {
+    try {
+      await fetch(`/webhook-api/leads/${id}`, { method: 'DELETE' });
+      setAllLeads(prev => prev.filter(l => l.id !== id));
+    } catch { /* ignore */ }
+  };
+
   const handleAddLead = async () => {
     if (!newLead.name.trim()) return;
     setSaving(true);
     try {
+      // Store locally
+      const res = await fetch('/webhook-api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLead),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAllLeads(prev => [saved, ...prev]);
+      }
+      // Also create Paperclip task
       await createIssue({
         title: `New lead added: ${newLead.name}`,
         description: `Manually added lead. Name: ${newLead.name}, Phone: ${newLead.phone}, Email: ${newLead.email}, Source: ${newLead.source}, Interest: ${newLead.interest}. Qualify and follow up within 2 hours.`,
@@ -364,6 +405,7 @@ export function Leads() {
             lead={selectedLead}
             column={selectedColumn}
             onClose={() => setSelectedLead(null)}
+            onDelete={handleDeleteLead}
           />
         )}
       </AnimatePresence>

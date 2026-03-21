@@ -21,8 +21,9 @@ const mailer = createTransport({
   },
 });
 
-// ── In-memory call log (persists until server restart) ─────────────────
+// ── In-memory storage (persists until server restart) ──────────────────
 const callLog = [];
+const leadLog = [];
 
 // Agent IDs
 const AGENTS = {
@@ -236,6 +237,60 @@ const server = http.createServer(async (req, res) => {
   // Call log API — GET /calls
   if (req.method === 'GET' && req.url === '/calls') {
     return respond(200, callLog);
+  }
+
+  // Leads API — GET /leads
+  if (req.method === 'GET' && req.url === '/leads') {
+    return respond(200, leadLog);
+  }
+
+  // Leads API — POST /leads (add a lead)
+  if (req.method === 'POST' && req.url === '/leads') {
+    const body = await readBody(req);
+    try {
+      const data = JSON.parse(body);
+      const lead = {
+        id: `lead-${Date.now()}`,
+        name: data.name || '',
+        phone: data.phone || '',
+        email: data.email || '',
+        source: data.source || 'CRM',
+        status: data.status || 'new',
+        interest: data.interest || '',
+        followUpDate: data.followUpDate || null,
+        notes: data.notes || '',
+        createdAt: new Date().toISOString(),
+      };
+      leadLog.unshift(lead);
+      console.log(`  👤 Lead added: ${lead.name} (${lead.phone})`);
+      return respond(200, lead);
+    } catch (err) {
+      return respond(500, { error: err.message });
+    }
+  }
+
+  // Leads API — DELETE /leads/:id
+  if (req.method === 'DELETE' && req.url?.startsWith('/leads/')) {
+    const id = req.url.split('/leads/')[1];
+    const idx = leadLog.findIndex(l => l.id === id);
+    if (idx !== -1) {
+      const removed = leadLog.splice(idx, 1)[0];
+      console.log(`  🗑️ Lead deleted: ${removed.name}`);
+      return respond(200, { deleted: true, id });
+    }
+    return respond(404, { error: 'Lead not found' });
+  }
+
+  // Calls API — DELETE /calls/:id
+  if (req.method === 'DELETE' && req.url?.startsWith('/calls/')) {
+    const id = req.url.split('/calls/')[1];
+    const idx = callLog.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      const removed = callLog.splice(idx, 1)[0];
+      console.log(`  🗑️ Call deleted: ${removed.callerName || removed.callerPhone}`);
+      return respond(200, { deleted: true, id });
+    }
+    return respond(404, { error: 'Call not found' });
   }
 
   // Cal.com webhook
