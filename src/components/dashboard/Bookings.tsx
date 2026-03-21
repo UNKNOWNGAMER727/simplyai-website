@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Video, ChevronDown, ChevronUp, Clock, DollarSign,
-  CalendarDays, RotateCcw, XCircle, Send, Star, CheckCircle2, Loader2, RefreshCw, ExternalLink,
+  CalendarDays, RotateCcw, XCircle, Send, Star, CheckCircle2, Loader2, RefreshCw, ExternalLink, Trash2,
 } from 'lucide-react';
 import { bookings as mockBookings } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
@@ -55,7 +55,7 @@ function filterBookings(bookings: readonly Booking[], filter: FilterKey): Bookin
   }
 }
 
-function BookingRow({ booking }: { booking: Booking }) {
+function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
 
@@ -211,6 +211,29 @@ function BookingRow({ booking }: { booking: Booking }) {
                 {booking.status === 'cancelled' && (
                   <ActionButtonShared onClick={makeAction('rebook')} icon={<ExternalLink size={12} />} label="Rebook Customer" variant="primary" />
                 )}
+                <ActionButtonShared
+                  onClick={async () => {
+                    // Cancel on Cal.com if still active
+                    if (isUpcoming) {
+                      try {
+                        await fetch(`/calcom/bookings/${booking.id}/cancel`, {
+                          method: 'POST',
+                          headers: {
+                            Authorization: `Bearer ${CALCOM_API_KEY}`,
+                            'cal-api-version': '2024-08-13',
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ cancellationReason: 'Removed from CRM' }),
+                        });
+                      } catch { /* might already be cancelled */ }
+                    }
+                    onRemove(booking.id);
+                    toast(`Removed ${booking.clientName}`);
+                  }}
+                  icon={<Trash2 size={12} />}
+                  label="Remove"
+                  variant="danger"
+                />
               </div>
             </div>
           </motion.div>
@@ -323,7 +346,7 @@ export function Bookings() {
         ) : (
           <AnimatePresence mode="popLayout">
             {filtered.map((booking) => (
-              <BookingRow key={booking.id} booking={booking} />
+              <BookingRow key={booking.id} booking={booking} onRemove={(id) => setAllBookings(prev => prev.filter(b => b.id !== id))} />
             ))}
           </AnimatePresence>
         )}
