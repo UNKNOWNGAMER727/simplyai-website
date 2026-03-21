@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 // framer-motion removed — was causing opacity:0 stuck state with async data
 import { CalendarDays, Zap, Send, Star, Loader2, RefreshCw } from 'lucide-react';
 import { bookings as mockBookings, activityFeed as mockActivity } from '../../data/mockData';
@@ -89,7 +89,7 @@ export function Overview() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const loadData = useCallback(async () => {
     try {
