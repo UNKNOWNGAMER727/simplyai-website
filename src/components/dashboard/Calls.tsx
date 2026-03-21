@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, PhoneMissed, ChevronDown, ChevronUp, Clock, UserPlus,
-  Link2, CheckCircle2, AlertCircle, Send,
+  Link2, CheckCircle2, AlertCircle, Send, RefreshCw, Loader2,
 } from 'lucide-react';
-import { calls } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
 import ActionButton from '../ui/ActionButton';
 import { EmptyState } from '../ui/EmptyState';
@@ -248,17 +247,50 @@ function CallRow({ call }: { call: Call }) {
 
 export function Calls() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [allCalls, setAllCalls] = useState<Call[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filtered = filterCalls(calls, activeFilter);
+  const loadCalls = useCallback(async () => {
+    try {
+      const res = await fetch('/webhook-api/calls');
+      if (res.ok) {
+        const data = await res.json();
+        setAllCalls(data);
+      }
+    } catch {
+      // webhook server might not be running
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const totalCalls = calls.length;
-  const answeredCount = calls.filter(c => !isMissed(c)).length;
-  const bookedCount = calls.filter(c => c.didBook).length;
-  const missedCount = calls.filter(c => isMissed(c)).length;
+  useEffect(() => {
+    loadCalls();
+    const interval = setInterval(loadCalls, 15000); // refresh every 15s
+    return () => clearInterval(interval);
+  }, [loadCalls]);
+
+  const filtered = filterCalls(allCalls, activeFilter);
+
+  const totalCalls = allCalls.length;
+  const answeredCount = allCalls.filter(c => !isMissed(c)).length;
+  const bookedCount = allCalls.filter(c => c.didBook).length;
+  const missedCount = allCalls.filter(c => isMissed(c)).length;
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-white">SkipCalls Log</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">SkipCalls Log</h2>
+        <div className="flex items-center gap-2">
+          {totalCalls > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#34c759] font-medium">Live</span>
+          )}
+          <button onClick={() => { loadCalls(); toast('Refreshing calls...'); }} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+            {loading ? <Loader2 size={14} className="text-gray-400 animate-spin" /> : <RefreshCw size={14} className="text-gray-400" />}
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[

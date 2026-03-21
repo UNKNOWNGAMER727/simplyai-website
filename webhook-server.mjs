@@ -21,6 +21,9 @@ const mailer = createTransport({
   },
 });
 
+// ── In-memory call log (persists until server restart) ─────────────────
+const callLog = [];
+
 // Agent IDs
 const AGENTS = {
   bookingCoordinator: '42b8a098-62b3-4c3e-aa9e-c24535c10c56',
@@ -230,6 +233,11 @@ const server = http.createServer(async (req, res) => {
     return respond(200, { status: 'ok', service: 'simply-ai-webhooks', email: true });
   }
 
+  // Call log API — GET /calls
+  if (req.method === 'GET' && req.url === '/calls') {
+    return respond(200, callLog);
+  }
+
   // Cal.com webhook
   if (req.method === 'POST' && req.url === '/webhook/calcom') {
     const body = await readBody(req);
@@ -249,6 +257,89 @@ const server = http.createServer(async (req, res) => {
       return respond(200, { received: true });
     } catch (err) {
       console.error('  Webhook error:', err.message);
+      return respond(500, { error: err.message });
+    }
+  }
+
+  // SkipCalls webhook — POST /webhook/skipcalls
+  if (req.method === 'POST' && req.url === '/webhook/skipcalls') {
+    const body = await readBody(req);
+    try {
+      const data = JSON.parse(body);
+      console.log(`\n[${new Date().toLocaleTimeString()}] SkipCalls webhook received`);
+      console.log(`  Event: ${data.event || data.type || 'unknown'}`);
+
+      // Extract call data — handle various SkipCalls payload shapes
+      const call = data.call || data.data || data;
+      const callerPhone = call.caller_phone || call.callerPhone || call.from || call.phone || '';
+      const callerName = call.caller_name || call.callerName || call.contact_name || '';
+      const duration = call.duration || call.call_duration || 0;
+      const summary = call.summary || call.ai_summary || call.transcript_summary || call.notes || '';
+      const transcript = call.transcript || call.full_transcript || '';
+      const direction = call.direction || call.type || 'inbound';
+      const status = call.status || call.call_status || 'completed';
+      const agentName = call.agent_name || call.receptionist_name || 'Simi';
+      const didBook = call.booking_made || call.did_book || false;
+      const callerEmail = call.caller_email || call.email || '';
+
+      const displayName = callerName || callerPhone || 'Unknown Caller';
+
+      console.log(`  📞 ${direction} call from ${displayName} (${callerPhone})`);
+      console.log(`  Duration: ${duration}s | Booked: ${didBook}`);
+      if (summary) console.log(`  Summary: ${summary.substring(0, 100)}`);
+
+      // Store in call log
+      callLog.unshift({
+        id: `call-${Date.now()}`,
+        callerName: callerName || null,
+        callerPhone,
+        date: new Date().toISOString(),
+        duration: `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`,
+        summary: summary || `${direction} call from ${displayName}`,
+        transcript: transcript || null,
+        didBook,
+        followUpStatus: 'none',
+        leadId: null,
+      });
+      if (callLog.length > 100) callLog.length = 100; // keep last 100
+
+      // Create task for Lead Handler
+      const taskTitle = didBook
+        ? `New booking call from ${displayName}`
+        : callerPhone
+          ? `Follow up on call from ${displayName}`
+          : `Process incoming call`;
+
+      const taskDesc = [
+        `📞 ${direction.charAt(0).toUpperCase() + direction.slice(1)} call handled by ${agentName}`,
+        `Caller: ${displayName}${callerPhone ? ` (${callerPhone})` : ''}${callerEmail ? ` — ${callerEmail}` : ''}`,
+        `Duration: ${Math.floor(duration / 60)}m ${duration % 60}s`,
+        `Status: ${status}`,
+        didBook ? '✅ Customer booked during the call' : '❌ Customer did NOT book',
+        summary ? `\nAI Summary: ${summary}` : '',
+        transcript ? `\nTranscript available` : '',
+        `\nAction needed:`,
+        didBook
+          ? `Verify the booking in Cal.com and send a confirmation.`
+          : `Follow up within 2 hours. Send booking link: cal.com/simplytech.ai. Be warm and helpful.`,
+      ].filter(Boolean).join('\n');
+
+      await createTask(taskTitle, taskDesc, AGENTS.leadHandler, 'high');
+      await wakeAgent(AGENTS.leadHandler);
+
+      // If caller didn't book, also notify Operations Manager
+      if (!didBook && callerPhone) {
+        await createTask(
+          `Missed opportunity: ${displayName} called but didn't book`,
+          `${displayName} (${callerPhone}) called Simply AI but didn't book. Lead Handler has been assigned follow-up. Track this in your daily briefing.`,
+          AGENTS.operationsManager,
+          'medium',
+        );
+      }
+
+      return respond(200, { received: true, caller: displayName });
+    } catch (err) {
+      console.error('  SkipCalls webhook error:', err.message);
       return respond(500, { error: err.message });
     }
   }
