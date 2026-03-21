@@ -2,13 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Video, ChevronDown, ChevronUp, Clock, DollarSign,
-  CalendarDays, RotateCcw, XCircle, Send, Star, CheckCircle2, Loader2, RefreshCw,
+  CalendarDays, RotateCcw, XCircle, Send, Star, CheckCircle2, Loader2, RefreshCw, ExternalLink,
 } from 'lucide-react';
 import { bookings as mockBookings } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
+import ActionButtonShared from '../ui/ActionButton';
 import { createIssue, invokeHeartbeat, AGENT_IDS } from '../../services/paperclip';
 import { fetchBookings, fetchEventTypes, toBooking } from '../../services/calcom';
 import type { Booking } from '../../types/crm';
+
+const CALCOM_API_KEY = import.meta.env.VITE_CALCOM_API_KEY ?? '';
 
 type FilterKey = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
@@ -63,80 +66,88 @@ function BookingRow({ booking }: { booking: Booking }) {
   const isUpcoming = booking.status === 'confirmed' || booking.status === 'pending';
   const isCompleted = booking.status === 'completed';
 
-  const handleAction = async (action: string) => {
-    setBusy(action);
-    try {
-      switch (action) {
-        case 'confirm': {
-          await createIssue({
-            title: `Send booking confirmation to ${booking.clientName}`,
-            description: `Send a confirmation email/SMS to ${booking.clientName} for their ${booking.tier} tier appointment on ${booking.date} at ${booking.time}. Location: ${booking.location === 'in-person' ? booking.address : 'Remote via Zoom'}. Include prep instructions: "Have your computer on and connected to Wi-Fi."`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.bookingCoordinator,
-          });
-          await invokeHeartbeat(AGENT_IDS.bookingCoordinator);
-          toast(`Confirmation task sent to Booking Coordinator`);
-          break;
-        }
-        case 'remind': {
-          await createIssue({
-            title: `Send appointment reminder to ${booking.clientName}`,
-            description: `Send a reminder to ${booking.clientName} for their upcoming ${booking.tier} tier appointment on ${booking.date} at ${booking.time}. Include reschedule link if needed.`,
-            priority: 'medium',
-            assigneeAgentId: AGENT_IDS.bookingCoordinator,
-          });
-          await invokeHeartbeat(AGENT_IDS.bookingCoordinator);
-          toast(`Reminder task sent to Booking Coordinator`);
-          break;
-        }
-        case 'followup': {
-          await createIssue({
-            title: `Send post-appointment follow-up to ${booking.clientName}`,
-            description: `${booking.clientName} completed their ${booking.tier} tier session. Send a thank-you email with 2-3 AI tips based on the ${booking.tier} package. Ask how they're enjoying their new tools.`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.reviewAgent,
-          });
-          await invokeHeartbeat(AGENT_IDS.reviewAgent);
-          toast(`Follow-up task sent to Review Agent`);
-          break;
-        }
-        case 'review': {
-          await createIssue({
-            title: `Request Google review from ${booking.clientName}`,
-            description: `Send a warm, non-pushy Google review request to ${booking.clientName} who completed their ${booking.tier} tier session. Frame it as "helping others like you discover AI." Include direct link to Google review page.`,
-            priority: 'medium',
-            assigneeAgentId: AGENT_IDS.reviewAgent,
-          });
-          await invokeHeartbeat(AGENT_IDS.reviewAgent);
-          toast(`Review request task sent to Review Agent`);
-          break;
-        }
+  const makeAction = (action: string) => async () => {
+    switch (action) {
+      case 'confirm': {
+        await createIssue({
+          title: `Send booking confirmation to ${booking.clientName}`,
+          description: `Send a confirmation email/SMS to ${booking.clientName} for their ${booking.tier} tier appointment on ${booking.date} at ${booking.time}. Location: ${booking.location === 'in-person' ? booking.address : 'Remote via Zoom'}. Include prep instructions: "Have your computer on and connected to Wi-Fi."`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.bookingCoordinator,
+        });
+        await invokeHeartbeat(AGENT_IDS.bookingCoordinator);
+        toast(`Confirmation task sent to Booking Coordinator`);
+        break;
       }
-    } catch (err) {
-      toast(`Action failed: ${err}`, 'error');
-    } finally {
-      setBusy(null);
+      case 'remind': {
+        await createIssue({
+          title: `Send appointment reminder to ${booking.clientName}`,
+          description: `Send a reminder to ${booking.clientName} for their upcoming ${booking.tier} tier appointment on ${booking.date} at ${booking.time}. Include reschedule link if needed.`,
+          priority: 'medium',
+          assigneeAgentId: AGENT_IDS.bookingCoordinator,
+        });
+        await invokeHeartbeat(AGENT_IDS.bookingCoordinator);
+        toast(`Reminder task sent to Booking Coordinator`);
+        break;
+      }
+      case 'followup': {
+        await createIssue({
+          title: `Send post-appointment follow-up to ${booking.clientName}`,
+          description: `${booking.clientName} completed their ${booking.tier} tier session. Send a thank-you email with 2-3 AI tips based on the ${booking.tier} package. Ask how they're enjoying their new tools.`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.reviewAgent,
+        });
+        await invokeHeartbeat(AGENT_IDS.reviewAgent);
+        toast(`Follow-up task sent to Review Agent`);
+        break;
+      }
+      case 'review': {
+        await createIssue({
+          title: `Request Google review from ${booking.clientName}`,
+          description: `Send a warm, non-pushy Google review request to ${booking.clientName} who completed their ${booking.tier} tier session. Frame it as "helping others like you discover AI." Include direct link to Google review page.`,
+          priority: 'medium',
+          assigneeAgentId: AGENT_IDS.reviewAgent,
+        });
+        await invokeHeartbeat(AGENT_IDS.reviewAgent);
+        toast(`Review request task sent to Review Agent`);
+        break;
+      }
+      case 'cancel': {
+        // Cancel via Cal.com API
+        const res = await fetch(`/calcom/bookings/${booking.id}/cancel`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${CALCOM_API_KEY}`,
+            'cal-api-version': '2024-08-13',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cancellationReason: 'Cancelled from CRM dashboard' }),
+        });
+        if (!res.ok) throw new Error(`Cancel failed: ${res.status}`);
+        // Create follow-up task
+        await createIssue({
+          title: `Follow up on cancellation: ${booking.clientName}`,
+          description: `${booking.clientName} cancelled their ${booking.tier} booking for ${booking.date}. Reach out in 2-3 days with a gentle message offering to reschedule. Booking link: cal.com/simplytech.ai`,
+          priority: 'medium',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Booking cancelled. Follow-up task sent to Lead Handler`);
+        break;
+      }
+      case 'reschedule': {
+        // Open Cal.com reschedule page
+        window.open(`https://cal.com/reschedule/${booking.id}`, '_blank');
+        toast('Reschedule page opened in new tab');
+        break;
+      }
+      case 'rebook': {
+        window.open('https://cal.com/simplytech.ai', '_blank');
+        toast('Booking page opened in new tab');
+        break;
+      }
     }
   };
-
-  const ActionButton = ({
-    action, icon, label, color,
-  }: {
-    action: string;
-    icon: React.ReactNode;
-    label: string;
-    color: string;
-  }) => (
-    <button
-      onClick={() => handleAction(action)}
-      disabled={busy !== null}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-      style={{ backgroundColor: `${color}20`, color }}
-    >
-      {busy === action ? <Loader2 size={12} className="animate-spin" /> : icon}
-      {label}
-    </button>
-  );
 
   return (
     <motion.div
@@ -186,21 +197,20 @@ function BookingRow({ booking }: { booking: Booking }) {
               <div className="flex flex-wrap gap-2 mt-3">
                 {isUpcoming && (
                   <>
-                    <ActionButton action="confirm" icon={<Send size={12} />} label="Send Confirmation" color="#0071e3" />
-                    <ActionButton action="remind" icon={<CalendarDays size={12} />} label="Send Reminder" color="#34c759" />
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0071e3]/15 text-[#0071e3] text-xs font-medium hover:bg-[#0071e3]/25 transition-colors">
-                      <RotateCcw size={12} />Reschedule
-                    </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 text-xs font-medium hover:bg-red-500/25 transition-colors">
-                      <XCircle size={12} />Cancel
-                    </button>
+                    <ActionButtonShared onClick={makeAction('confirm')} icon={<Send size={12} />} label="Send Confirmation" variant="accent" color="#0071e3" />
+                    <ActionButtonShared onClick={makeAction('remind')} icon={<CalendarDays size={12} />} label="Send Reminder" variant="accent" color="#34c759" />
+                    <ActionButtonShared onClick={makeAction('reschedule')} icon={<RotateCcw size={12} />} label="Reschedule" variant="accent" color="#0071e3" />
+                    <ActionButtonShared onClick={makeAction('cancel')} icon={<XCircle size={12} />} label="Cancel" variant="danger" />
                   </>
                 )}
                 {isCompleted && (
                   <>
-                    <ActionButton action="followup" icon={<CheckCircle2 size={12} />} label="Send Follow-up" color="#34c759" />
-                    <ActionButton action="review" icon={<Star size={12} />} label="Request Review" color="#bf5af2" />
+                    <ActionButtonShared onClick={makeAction('followup')} icon={<CheckCircle2 size={12} />} label="Send Follow-up" variant="accent" color="#34c759" />
+                    <ActionButtonShared onClick={makeAction('review')} icon={<Star size={12} />} label="Request Review" variant="accent" color="#bf5af2" />
                   </>
+                )}
+                {booking.status === 'cancelled' && (
+                  <ActionButtonShared onClick={makeAction('rebook')} icon={<ExternalLink size={12} />} label="Rebook Customer" variant="primary" />
                 )}
               </div>
             </div>
