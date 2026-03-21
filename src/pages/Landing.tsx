@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, Mail, ArrowRight } from 'lucide-react';
+import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 
 const fade = (delay: number) => ({
@@ -336,10 +336,12 @@ export function Landing() {
               <Phone className="w-4 h-4" /> (818) 600-6825
             </a>
             <a
-              href="mailto:hello@simplyai.tech"
+              href="https://cal.com/simplytech.ai"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-white px-7 py-3.5 rounded-full text-[16px] font-medium border border-white/20 hover:bg-white/10 transition-colors"
             >
-              <Mail className="w-4 h-4" /> hello@simplyai.tech
+              <Calendar className="w-4 h-4" /> Book Online
             </a>
           </div>
           <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
@@ -373,7 +375,7 @@ export function Landing() {
           </div>
           <div className="flex items-center gap-6">
             <a href="tel:+18186006825" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">(818) 600-6825</a>
-            <a href="mailto:hello@simplyai.tech" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">hello@simplyai.tech</a>
+            <a href="https://cal.com/simplytech.ai" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">Book Online</a>
           </div>
         </div>
       </footer>
