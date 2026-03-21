@@ -59,6 +59,23 @@ export function Calendar() {
     loadBookings();
   }, [loadBookings]);
 
+  // Read hidden bookings from localStorage (shared with Bookings tab)
+  const hiddenIds = (() => {
+    try { return new Set<string>(JSON.parse(localStorage.getItem('hidden-bookings') || '[]')); }
+    catch { return new Set<string>(); }
+  })();
+
+  // Re-read on storage changes (e.g. user hides a booking in another tab)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'hidden-bookings') loadBookings();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [loadBookings]);
+
+  const visibleBookings = bookings.filter(b => !hiddenIds.has(String(b.id)));
+
   const prevMonth = () => {
     if (month === 0) { setMonth(11); setYear(year - 1); }
     else setMonth(month - 1);
@@ -84,9 +101,9 @@ export function Calendar() {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  // Group bookings by date
+  // Group visible bookings by date
   const bookingsByDate: Record<string, Booking[]> = {};
-  for (const b of bookings) {
+  for (const b of visibleBookings) {
     if (!bookingsByDate[b.date]) bookingsByDate[b.date] = [];
     bookingsByDate[b.date].push(b);
   }
@@ -268,11 +285,11 @@ export function Calendar() {
           )}
 
           {/* Upcoming section */}
-          {!selectedDate && bookings.length > 0 && (
+          {!selectedDate && visibleBookings.length > 0 && (
             <div className="mt-4">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Upcoming</h4>
               <div className="space-y-2">
-                {bookings
+                {visibleBookings
                   .filter((b) => b.date >= todayStr && b.status !== 'cancelled')
                   .sort((a, b) => a.date.localeCompare(b.date))
                   .slice(0, 5)

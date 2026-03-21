@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, X, Phone, Mail, Calendar, MessageSquare, ChevronRight,
-  Send, Link2, UserPlus, Trash2, RefreshCw,
+  Send, Link2, UserPlus, Trash2,
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import ActionButton from '../ui/ActionButton';

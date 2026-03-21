@@ -80,6 +80,7 @@ export function Clients() {
         />
         <button
           type="button"
+          onClick={() => { /* TODO: Add client form */ }}
           className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-80"
           style={{ backgroundColor: '#0071e3' }}
         >
@@ -142,6 +143,7 @@ export function Clients() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleSelectClient(client);
                     }}
                     className="rounded-lg border border-neutral-700 px-3 py-1 text-xs text-neutral-300 transition-colors hover:border-neutral-500 hover:text-white"
                   >
@@ -186,9 +188,9 @@ export function Clients() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <DetailActionButton label="Call" color="#34c759" />
-                  <DetailActionButton label="Email" color="#0071e3" />
-                  <DetailActionButton label="Edit" color="#ff9f0a" />
+                  <DetailActionButton label="Call" color="#34c759" onClick={() => window.open(`tel:${selectedClient.phone}`)} />
+                  <DetailActionButton label="Email" color="#0071e3" onClick={() => window.open(`mailto:${selectedClient.email}`)} />
+                  <DetailActionButton label="Edit" color="#ff9f0a" onClick={() => { /* TODO: edit form */ }} />
                 </div>
               </div>
 
@@ -256,10 +258,11 @@ export function Clients() {
   );
 }
 
-function DetailActionButton({ label, color }: { label: string; color: string }) {
+function DetailActionButton({ label, color, onClick }: { label: string; color: string; onClick?: () => void }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-80"
       style={{ backgroundColor: color }}
     >

@@ -75,7 +75,7 @@ export function Revenue() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold tracking-tight">Revenue</h2>
-        <button className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+        <button onClick={() => { /* TODO: CSV export */ }} className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
           Export CSV
         </button>
       </div>

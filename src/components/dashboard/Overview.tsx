@@ -126,7 +126,13 @@ export function Overview() {
       try {
         const [rawBookings, eventTypes] = await Promise.all([fetchBookings(), fetchEventTypes()]);
         const converted = rawBookings.map((b) => toBooking(b, eventTypes));
-        const todayOnly = converted.filter((b) => b.date === today);
+
+        // Respect hidden bookings from Bookings tab
+        let hiddenIds: Set<string>;
+        try { hiddenIds = new Set<string>(JSON.parse(localStorage.getItem('hidden-bookings') || '[]')); }
+        catch { hiddenIds = new Set<string>(); }
+
+        const todayOnly = converted.filter((b) => b.date === today && !hiddenIds.has(String(b.id)));
         setTodayBookings(todayOnly.length > 0 ? todayOnly : mockBookings.filter((b) => b.date === '2026-03-20'));
       } catch {
         setTodayBookings(mockBookings.filter((b) => b.date === '2026-03-20'));

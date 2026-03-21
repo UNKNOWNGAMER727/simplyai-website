@@ -278,9 +278,8 @@ export function Bookings() {
     }
   }, []);
 
-  useEffect(() => {
-    loadRealBookings();
-  }, [loadRealBookings]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadRealBookings(); }, [loadRealBookings]);
 
   const visibleBookings = allBookings.filter(b => !hiddenIds.has(b.id));
   const filtered = filterBookings(visibleBookings, activeFilter);
