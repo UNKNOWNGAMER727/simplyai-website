@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, PhoneMissed, ChevronDown, ChevronUp, Clock, UserPlus,
-  Link2, CheckCircle2, AlertCircle, Send, Loader2,
+  Link2, CheckCircle2, AlertCircle, Send,
 } from 'lucide-react';
 import { calls } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
+import ActionButton from '../ui/ActionButton';
+import { EmptyState } from '../ui/EmptyState';
 import { createIssue, invokeHeartbeat, AGENT_IDS } from '../../services/paperclip';
 import type { Call } from '../../types/crm';
 
@@ -42,7 +44,6 @@ function formatDate(iso: string): string {
 
 function CallRow({ call }: { call: Call }) {
   const [expanded, setExpanded] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
   const { toast } = useToast();
   const missed = isMissed(call);
 
@@ -54,60 +55,53 @@ function CallRow({ call }: { call: Call }) {
         ? 'border-l-[#ff9f0a]'
         : 'border-l-[#0071e3]';
 
-  const handleAction = async (action: string) => {
-    setBusy(action);
-    try {
-      const callerLabel = call.callerName ?? call.callerPhone;
-      switch (action) {
-        case 'create-lead': {
-          await createIssue({
-            title: `Create lead from call: ${callerLabel}`,
-            description: `New lead from phone call. Phone: ${call.callerPhone}. Call summary: "${call.summary}". Qualify this lead, add to tracking, and follow up with booking link within 2 hours.`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Lead creation task sent to Lead Handler`);
-          break;
-        }
-        case 'send-booking': {
-          await createIssue({
-            title: `Send booking link to ${callerLabel}`,
-            description: `${callerLabel} (${call.callerPhone}) called but didn't book. Send them the booking link (cal.com/simplytech.ai) via SMS. Reference their call: "${call.summary}". Suggest the right tier based on their interest.`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Booking link task sent to Lead Handler`);
-          break;
-        }
-        case 'follow-up': {
-          await createIssue({
-            title: `Follow up with ${callerLabel}`,
-            description: `Send a follow-up message to ${callerLabel} (${call.callerPhone}). They called on ${new Date(call.date).toLocaleDateString()}. Summary: "${call.summary}". Be warm and helpful, not pushy. Include booking link.`,
-            priority: 'medium',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Follow-up task sent to Lead Handler`);
-          break;
-        }
-        case 'callback': {
-          await createIssue({
-            title: `Return missed call to ${call.callerPhone}`,
-            description: `Missed call from ${call.callerPhone} on ${new Date(call.date).toLocaleDateString()}. No voicemail left. Send a friendly text: "Hi! We noticed you called Simply AI. How can we help you get started with AI? Here's our booking link: cal.com/simplytech.ai"`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Callback task sent to Lead Handler`);
-          break;
-        }
+  const makeAction = (action: string) => async () => {
+    const callerLabel = call.callerName ?? call.callerPhone;
+    switch (action) {
+      case 'create-lead': {
+        await createIssue({
+          title: `Create lead from call: ${callerLabel}`,
+          description: `New lead from phone call. Phone: ${call.callerPhone}. Call summary: "${call.summary}". Qualify this lead, add to tracking, and follow up with booking link within 2 hours.`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Lead creation task sent to Lead Handler`);
+        break;
       }
-    } catch (err) {
-      toast(`Action failed: ${err}`, 'error');
-    } finally {
-      setBusy(null);
+      case 'send-booking': {
+        await createIssue({
+          title: `Send booking link to ${callerLabel}`,
+          description: `${callerLabel} (${call.callerPhone}) called but didn't book. Send them the booking link (cal.com/simplytech.ai) via SMS. Reference their call: "${call.summary}". Suggest the right tier based on their interest.`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Booking link task sent to Lead Handler`);
+        break;
+      }
+      case 'follow-up': {
+        await createIssue({
+          title: `Follow up with ${callerLabel}`,
+          description: `Send a follow-up message to ${callerLabel} (${call.callerPhone}). They called on ${new Date(call.date).toLocaleDateString()}. Summary: "${call.summary}". Be warm and helpful, not pushy. Include booking link.`,
+          priority: 'medium',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Follow-up task sent to Lead Handler`);
+        break;
+      }
+      case 'callback': {
+        await createIssue({
+          title: `Return missed call to ${call.callerPhone}`,
+          description: `Missed call from ${call.callerPhone} on ${new Date(call.date).toLocaleDateString()}. No voicemail left. Send a friendly text: "Hi! We noticed you called Simply AI. How can we help you get started with AI? Here's our booking link: cal.com/simplytech.ai"`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Callback task sent to Lead Handler`);
+        break;
+      }
     }
   };
 
@@ -208,44 +202,40 @@ function CallRow({ call }: { call: Call }) {
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2">
                 {missed && (
-                  <button
-                    onClick={() => handleAction('callback')}
-                    disabled={busy !== null}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff9f0a]/15 text-[#ff9f0a] text-xs font-medium hover:bg-[#ff9f0a]/25 transition-colors disabled:opacity-50"
-                  >
-                    {busy === 'callback' ? <Loader2 size={12} className="animate-spin" /> : <Phone size={12} />}
-                    Send Callback Text
-                  </button>
+                  <ActionButton
+                    onClick={makeAction('callback')}
+                    icon={<Phone size={12} />}
+                    label="Send Callback Text"
+                    variant="danger"
+                    color="#ff9f0a"
+                  />
                 )}
                 {!call.leadId && !missed && (
-                  <button
-                    onClick={() => handleAction('create-lead')}
-                    disabled={busy !== null}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#bf5af2]/15 text-[#bf5af2] text-xs font-medium hover:bg-[#bf5af2]/25 transition-colors disabled:opacity-50"
-                  >
-                    {busy === 'create-lead' ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
-                    Create Lead
-                  </button>
+                  <ActionButton
+                    onClick={makeAction('create-lead')}
+                    icon={<UserPlus size={12} />}
+                    label="Create Lead"
+                    variant="accent"
+                    color="#bf5af2"
+                  />
                 )}
                 {!call.didBook && !missed && (
-                  <button
-                    onClick={() => handleAction('send-booking')}
-                    disabled={busy !== null}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0071e3]/15 text-[#0071e3] text-xs font-medium hover:bg-[#0071e3]/25 transition-colors disabled:opacity-50"
-                  >
-                    {busy === 'send-booking' ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
-                    Send Booking Link
-                  </button>
+                  <ActionButton
+                    onClick={makeAction('send-booking')}
+                    icon={<Link2 size={12} />}
+                    label="Send Booking Link"
+                    variant="accent"
+                    color="#0071e3"
+                  />
                 )}
                 {call.followUpStatus === 'none' && !missed && (
-                  <button
-                    onClick={() => handleAction('follow-up')}
-                    disabled={busy !== null}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#34c759]/15 text-[#34c759] text-xs font-medium hover:bg-[#34c759]/25 transition-colors disabled:opacity-50"
-                  >
-                    {busy === 'follow-up' ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                    Send Follow-up
-                  </button>
+                  <ActionButton
+                    onClick={makeAction('follow-up')}
+                    icon={<Send size={12} />}
+                    label="Send Follow-up"
+                    variant="accent"
+                    color="#34c759"
+                  />
                 )}
               </div>
             </div>
@@ -279,7 +269,9 @@ export function Calls() {
         ].map((stat) => (
           <div key={stat.label} className="bg-[#1a1a1a] rounded-xl border border-white/10 p-3">
             <p className="text-xs text-gray-500">{stat.label}</p>
-            <p className="text-2xl font-bold mt-0.5" style={{ color: stat.color }}>{stat.value}</p>
+            <p className="text-2xl font-bold mt-0.5" style={{ color: stat.color }}>
+              {totalCalls === 0 ? '\u2014' : stat.value}
+            </p>
           </div>
         ))}
       </div>
@@ -306,8 +298,15 @@ export function Calls() {
             <CallRow key={call.id} call={call} />
           ))}
         </AnimatePresence>
-        {filtered.length === 0 && (
+        {filtered.length === 0 && totalCalls > 0 && (
           <div className="text-center py-12 text-gray-500 text-sm">No calls match this filter.</div>
+        )}
+        {totalCalls === 0 && (
+          <EmptyState
+            icon={Phone}
+            title="No calls yet"
+            description="When calls come in through SkipCalls at (818) 600-6825, they'll appear here with AI-generated summaries and one-click follow-up actions."
+          />
         )}
       </div>
     </div>

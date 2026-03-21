@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Zap, RefreshCw, Send, Loader2, Clock, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
+import ActionButton from '../ui/ActionButton';
 import {
   listAgents,
   listIssues,
@@ -13,7 +14,7 @@ import {
   type PaperclipIssue,
 } from '../../services/paperclip';
 
-// ── Icon / color maps ──────────────────────────────────────────────────────
+// -- Icon / color maps --------------------------------------------------------
 
 const ICON_MAP: Record<string, string> = {
   star: '\u2B50',
@@ -31,11 +32,11 @@ const ROLE_COLORS: Record<string, string> = {
   'Content Agent': '#ff375f',
 };
 
-const STATUS_DOT: Record<string, string> = {
-  idle: '#86868b',
-  active: '#34c759',
-  paused: '#ff9f0a',
-  error: '#ff3b30',
+const STATUS_RING: Record<string, { color: string; pulse: boolean }> = {
+  idle: { color: '#34c759', pulse: true },
+  active: { color: '#34c759', pulse: true },
+  paused: { color: '#ff9f0a', pulse: false },
+  error: { color: '#ff3b30', pulse: false },
 };
 
 function timeAgo(iso: string | null): string {
@@ -49,7 +50,7 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// -- Component ----------------------------------------------------------------
 
 export function AITeam() {
   const { toast } = useToast();
@@ -77,7 +78,7 @@ export function AITeam() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000); // refresh every 30s
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -153,6 +154,12 @@ export function AITeam() {
         (t.status === 'todo' || t.status === 'in_progress')
     );
 
+  // -- Throughput stats derived from tasks ------------------------------------
+
+  const doneCount = tasks.filter((t) => t.status === 'done').length;
+  const inProgressCount = tasks.filter((t) => t.status === 'in_progress').length;
+  const queuedCount = tasks.filter((t) => t.status === 'todo').length;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -186,6 +193,31 @@ export function AITeam() {
         </div>
       </div>
 
+      {/* Throughput stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Tasks Done', value: doneCount, color: '#34c759' },
+          { label: 'In Progress', value: inProgressCount, color: '#0071e3' },
+          { label: 'Queued', value: queuedCount, color: '#ff9f0a' },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-[#1a1a1a] rounded-xl border border-white/5 px-4 py-3 flex items-center gap-3"
+          >
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: stat.color }}
+            />
+            <div>
+              <p className="text-lg font-semibold" style={{ color: stat.color }}>
+                {stat.value}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-[#86868b]">{stat.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Agent grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {agents.map((agent) => {
@@ -195,31 +227,33 @@ export function AITeam() {
           const color = ROLE_COLORS[agent.name] ?? '#0071e3';
           const icon = ICON_MAP[agent.icon] ?? '\uD83E\uDD16';
           const pendingTasks = agentTasks(agent.id);
+          const ring = STATUS_RING[agent.status] ?? { color: '#86868b', pulse: false };
 
           return (
             <motion.div
               key={agent.id}
               layout
-              className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5 flex flex-col gap-4"
+              className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5 flex flex-col gap-4 hover:-translate-y-0.5 hover:shadow-lg transition-all"
+              style={{ borderLeftWidth: 3, borderLeftColor: color }}
             >
               {/* Top row: avatar + name + status */}
               <div className="flex items-start gap-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
-                  style={{ backgroundColor: `${color}20` }}
-                >
-                  {icon}
+                {/* Avatar with status ring */}
+                <div className="relative shrink-0">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+                    style={{ backgroundColor: `${color}20` }}
+                  >
+                    {icon}
+                  </div>
+                  <div
+                    className={`absolute inset-0 rounded-xl ring-2 pointer-events-none${ring.pulse ? ' animate-pulse' : ''}`}
+                    style={{ '--tw-ring-color': ring.color } as React.CSSProperties}
+                  />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold truncate">{agent.name}</h3>
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: STATUS_DOT[agent.status] ?? '#86868b' }}
-                      title={agent.status}
-                    />
-                  </div>
+                  <h3 className="text-sm font-semibold truncate">{agent.name}</h3>
                   <p className="text-xs text-[#86868b] leading-snug mt-0.5">{agent.capabilities}</p>
                 </div>
 
@@ -265,29 +299,29 @@ export function AITeam() {
 
               {/* Action buttons */}
               <div className="flex gap-2 mt-auto">
-                <button
+                <ActionButton
                   onClick={() => handleWakeup(agent)}
+                  icon={<Zap size={12} />}
+                  label="Wake Up"
+                  variant="success"
                   disabled={isBusy}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#34c759]/20 text-[#34c759] hover:bg-[#34c759]/30 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                  Wake Up
-                </button>
-                <button
+                  className="flex-1 justify-center"
+                />
+                <ActionButton
                   onClick={() => handlePauseResume(agent)}
+                  icon={agent.status === 'paused' ? <Play size={12} /> : <Pause size={12} />}
+                  label={agent.status === 'paused' ? 'Resume' : 'Pause'}
+                  variant="ghost"
                   disabled={isBusy}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {agent.status === 'paused' ? <Play size={12} /> : <Pause size={12} />}
-                  {agent.status === 'paused' ? 'Resume' : 'Pause'}
-                </button>
-                <button
-                  onClick={() => setAssigningTo(isAssigning ? null : agent.id)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#0071e3]/20 text-[#0071e3] hover:bg-[#0071e3]/30 transition-colors cursor-pointer"
-                >
-                  <Send size={12} />
-                  Assign Task
-                </button>
+                />
+                <ActionButton
+                  onClick={async () => setAssigningTo(isAssigning ? null : agent.id)}
+                  icon={<Send size={12} />}
+                  label="Assign Task"
+                  variant="accent"
+                  color="#0071e3"
+                  className="flex-1 justify-center"
+                />
               </div>
 
               {/* Assign task input */}

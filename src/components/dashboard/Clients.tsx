@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Users } from 'lucide-react';
 import type { Client } from '../../types/crm';
 import { clients as allClients, clientTimelines } from '../../data/mockData';
+import { EmptyState } from '../ui/EmptyState';
 
 const tierColors: Record<Client['serviceTier'], string> = {
   basic: '#0071e3',
@@ -25,15 +27,23 @@ function formatDate(iso: string): string {
   });
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' as const } },
-};
-
 export function Clients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
+
+  // Show empty state when no clients exist
+  if (allClients.length === 0) {
+    return (
+      <div className="space-y-6">
+        <EmptyState
+          icon={Users}
+          title="No clients yet"
+          description="Clients will appear here after their first completed appointment. You'll see their setup details, installed tools, and review status."
+        />
+      </div>
+    );
+  }
 
   const filtered = allClients.filter((c) => {
     const q = searchQuery.toLowerCase();
@@ -58,14 +68,9 @@ export function Clients() {
   const timeline = selectedClient ? clientTimelines[selectedClient.id] ?? [] : [];
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
-      <motion.div variants={fadeUp} className="flex items-center gap-4">
+      <div className="flex items-center gap-4">
         <input
           type="text"
           placeholder="Search clients..."
@@ -80,10 +85,10 @@ export function Clients() {
         >
           + Add Client
         </button>
-      </motion.div>
+      </div>
 
       {/* Table */}
-      <motion.div variants={fadeUp} className="overflow-x-auto rounded-2xl" style={{ backgroundColor: '#1a1a1a' }}>
+      <div className="overflow-x-auto rounded-2xl" style={{ backgroundColor: '#1a1a1a' }}>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-neutral-800 text-xs uppercase text-neutral-500">
@@ -154,7 +159,7 @@ export function Clients() {
             )}
           </tbody>
         </table>
-      </motion.div>
+      </div>
 
       {/* Detail Panel */}
       <AnimatePresence>
@@ -181,9 +186,9 @@ export function Clients() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <ActionButton label="Call" color="#34c759" />
-                  <ActionButton label="Email" color="#0071e3" />
-                  <ActionButton label="Edit" color="#ff9f0a" />
+                  <DetailActionButton label="Call" color="#34c759" />
+                  <DetailActionButton label="Email" color="#0071e3" />
+                  <DetailActionButton label="Edit" color="#ff9f0a" />
                 </div>
               </div>
 
@@ -247,11 +252,11 @@ export function Clients() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
-function ActionButton({ label, color }: { label: string; color: string }) {
+function DetailActionButton({ label, color }: { label: string; color: string }) {
   return (
     <button
       type="button"

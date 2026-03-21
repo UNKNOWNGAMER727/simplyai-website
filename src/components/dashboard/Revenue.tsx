@@ -1,7 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { DollarSign } from 'lucide-react';
 import { revenueEntries, monthlyRevenue } from '../../data/mockData';
+import { EmptyState } from '../ui/EmptyState';
 
-// ── Tier colors ─────────────────────────────────────────────────────────────
+// -- Tier colors --------------------------------------------------------------
 
 const TIER_COLORS: Record<string, string> = {
   basic: '#0071e3',
@@ -15,28 +17,7 @@ const TIER_PRICES: Record<string, number> = {
   premium: 349,
 };
 
-// ── Derived data ────────────────────────────────────────────────────────────
-
-const totalRevenue = revenueEntries.reduce((sum, e) => sum + e.amount, 0);
-const thisMonthEntries = revenueEntries.filter((e) => e.date.startsWith('2026-03'));
-const thisMonth = thisMonthEntries.reduce((sum, e) => sum + e.amount, 0);
-const avgPerClient = Math.round(totalRevenue / revenueEntries.length);
-const projectedMonthly = Math.round(
-  (thisMonth / new Date().getDate()) * 30
-);
-
-const MONTHLY_GOAL = 5000;
-const goalProgress = Math.min((thisMonth / MONTHLY_GOAL) * 100, 100);
-
-// ── Tier breakdown for current month ────────────────────────────────────────
-
-const tierBreakdown = (['basic', 'pro', 'premium'] as const).map((tier) => ({
-  tier,
-  total: thisMonthEntries.filter((e) => e.tier === tier).reduce((s, e) => s + e.amount, 0),
-  count: thisMonthEntries.filter((e) => e.tier === tier).length,
-}));
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// -- Helpers ------------------------------------------------------------------
 
 function formatCurrency(n: number): string {
   return `$${n.toLocaleString()}`;
@@ -46,9 +27,49 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// ── Component ───────────────────────────────────────────────────────────────
+// -- Component ----------------------------------------------------------------
 
 export function Revenue() {
+  // Show empty state when no revenue data exists
+  if (revenueEntries.length === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">Revenue</h2>
+          <button className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+            Export CSV
+          </button>
+        </div>
+
+        <EmptyState
+          icon={DollarSign}
+          title="Revenue tracking"
+          description="Revenue will be tracked automatically as clients complete bookings. You'll see breakdowns by tier, monthly trends, and payment status."
+        />
+      </div>
+    );
+  }
+
+  // -- Derived data (only computed when data exists) --------------------------
+
+  const totalRevenue = revenueEntries.reduce((sum, e) => sum + e.amount, 0);
+  const thisMonthEntries = revenueEntries.filter((e) => e.date.startsWith('2026-03'));
+  const thisMonth = thisMonthEntries.reduce((sum, e) => sum + e.amount, 0);
+  const avgPerClient = Math.round(totalRevenue / revenueEntries.length);
+  const projectedMonthly = Math.round(
+    (thisMonth / new Date().getDate()) * 30
+  );
+
+  const MONTHLY_GOAL = 5000;
+  const goalProgress = Math.min((thisMonth / MONTHLY_GOAL) * 100, 100);
+
+  const tierBreakdown = (['basic', 'pro', 'premium'] as const).map((tier) => ({
+    tier,
+    total: thisMonthEntries.filter((e) => e.tier === tier).reduce((s, e) => s + e.amount, 0),
+    count: thisMonthEntries.filter((e) => e.tier === tier).length,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -104,111 +125,108 @@ export function Revenue() {
       </div>
 
       {/* Monthly revenue chart */}
-      <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
-        <h3 className="text-sm font-medium mb-4">Monthly Revenue by Tier</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={[...monthlyRevenue]} barCategoryGap="20%">
-              <XAxis
-                dataKey="month"
-                tick={{ fill: '#86868b', fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: '#86868b', fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `$${v}`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 12,
-                  color: '#fff',
-                  fontSize: 12,
-                }}
-                formatter={(value, name) => {
-                  const n = String(name ?? '');
-                  return [`$${value ?? 0}`, n.charAt(0).toUpperCase() + n.slice(1)];
-                }}
-              />
-              <Bar dataKey="basic" stackId="a" fill={TIER_COLORS.basic} radius={[0, 0, 0, 0]} />
-              <Bar dataKey="pro" stackId="a" fill={TIER_COLORS.pro} radius={[0, 0, 0, 0]} />
-              <Bar dataKey="premium" stackId="a" fill={TIER_COLORS.premium} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      {monthlyRevenue.length > 0 && (
+        <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
+          <h3 className="text-sm font-medium mb-4">Monthly Revenue by Tier</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[...monthlyRevenue]} barCategoryGap="20%">
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: '#86868b', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: '#86868b', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => `$${v}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 12,
+                    color: '#fff',
+                    fontSize: 12,
+                  }}
+                  formatter={(value, name) => {
+                    const n = String(name ?? '');
+                    return [`$${value ?? 0}`, n.charAt(0).toUpperCase() + n.slice(1)];
+                  }}
+                />
+                <Bar dataKey="basic" stackId="a" fill={TIER_COLORS.basic} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="pro" stackId="a" fill={TIER_COLORS.pro} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="premium" stackId="a" fill={TIER_COLORS.premium} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Tier breakdown */}
-      <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
-        <h3 className="text-sm font-medium mb-4">This Month by Tier</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {tierBreakdown.map(({ tier, total, count }) => (
-            <div key={tier} className="text-center">
-              <div
-                className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-2"
-                style={{
-                  backgroundColor: `${TIER_COLORS[tier]}20`,
-                  color: TIER_COLORS[tier],
-                }}
-              >
-                {tier.charAt(0).toUpperCase() + tier.slice(1)} — ${TIER_PRICES[tier]}
+      {tierBreakdown.some((t) => t.count > 0) && (
+        <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
+          <h3 className="text-sm font-medium mb-4">This Month by Tier</h3>
+          <div className="grid grid-cols-3 gap-4">
+            {tierBreakdown.map(({ tier, total, count }) => (
+              <div key={tier} className="text-center">
+                <div
+                  className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-2"
+                  style={{
+                    backgroundColor: `${TIER_COLORS[tier]}20`,
+                    color: TIER_COLORS[tier],
+                  }}
+                >
+                  {tier.charAt(0).toUpperCase() + tier.slice(1)} — ${TIER_PRICES[tier]}
+                </div>
+                <p className="text-lg font-semibold">{formatCurrency(total)}</p>
+                <p className="text-xs text-[#86868b]">{count} client{count !== 1 ? 's' : ''}</p>
               </div>
-              <p className="text-lg font-semibold">{formatCurrency(total)}</p>
-              <p className="text-xs text-[#86868b]">{count} client{count !== 1 ? 's' : ''}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Recent transactions */}
-      <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
-        <h3 className="text-sm font-medium mb-4">Recent Transactions</h3>
-        <div className="space-y-3">
-          {revenueEntries.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0"
-            >
-              {/* Client name */}
-              <span className="flex-1 text-sm font-medium truncate">{entry.clientName}</span>
-
-              {/* Tier badge */}
-              <span
-                className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  backgroundColor: `${TIER_COLORS[entry.tier]}20`,
-                  color: TIER_COLORS[entry.tier],
-                }}
+      {revenueEntries.length > 0 && (
+        <div className="bg-[#1a1a1a] rounded-2xl border border-white/5 p-5">
+          <h3 className="text-sm font-medium mb-4">Recent Transactions</h3>
+          <div className="space-y-3">
+            {revenueEntries.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0"
               >
-                {entry.tier}
-              </span>
-
-              {/* Amount */}
-              <span className="shrink-0 text-sm font-semibold w-16 text-right">
-                {formatCurrency(entry.amount)}
-              </span>
-
-              {/* Date */}
-              <span className="shrink-0 text-xs text-[#86868b] w-16 text-right">
-                {formatDate(entry.date)}
-              </span>
-
-              {/* Payment status */}
-              <span
-                className="shrink-0 w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: entry.status === 'paid' ? '#34c759' : '#ff9f0a',
-                }}
-                title={entry.status}
-              />
-            </div>
-          ))}
+                <span className="flex-1 text-sm font-medium truncate">{entry.clientName}</span>
+                <span
+                  className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider"
+                  style={{
+                    backgroundColor: `${TIER_COLORS[entry.tier]}20`,
+                    color: TIER_COLORS[entry.tier],
+                  }}
+                >
+                  {entry.tier}
+                </span>
+                <span className="shrink-0 text-sm font-semibold w-16 text-right">
+                  {formatCurrency(entry.amount)}
+                </span>
+                <span className="shrink-0 text-xs text-[#86868b] w-16 text-right">
+                  {formatDate(entry.date)}
+                </span>
+                <span
+                  className="shrink-0 w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor: entry.status === 'paid' ? '#34c759' : '#ff9f0a',
+                  }}
+                  title={entry.status}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

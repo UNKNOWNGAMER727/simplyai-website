@@ -1,8 +1,20 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 // framer-motion removed — was causing opacity:0 stuck state with async data
-import { CalendarDays, Zap, Send, Star, Loader2, RefreshCw } from 'lucide-react';
+import {
+  CalendarDays,
+  Zap,
+  Send,
+  Star,
+  RefreshCw,
+  Phone,
+  DollarSign,
+  UserPlus,
+} from 'lucide-react';
 import { bookings as mockBookings, activityFeed as mockActivity } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
+import { SmartAssistList } from '../ui/SmartAssist';
+import ActionButton from '../ui/ActionButton';
+import { EmptyState } from '../ui/EmptyState';
 import { createIssue, invokeHeartbeat, listAgents, listIssues, AGENT_IDS } from '../../services/paperclip';
 import { fetchBookings, fetchEventTypes, toBooking } from '../../services/calcom';
 import type { Booking } from '../../types/crm';
@@ -26,6 +38,16 @@ const typeColors: Record<ActivityItem['type'], string> = {
   review: '#34c759',
   payment: '#34c759',
   lead: '#ff375f',
+};
+
+const typeIcons: Record<ActivityItem['type'], typeof Zap> = {
+  task: Zap,
+  agent: Zap,
+  booking: CalendarDays,
+  call: Phone,
+  review: Star,
+  payment: DollarSign,
+  lead: UserPlus,
 };
 
 function formatTime(iso: string): string {
@@ -137,6 +159,70 @@ export function Overview() {
     { label: 'Today\'s Bookings', value: todayBookings.length, color: '#bf5af2' },
   ];
 
+  // ── Smart Assists ──────────────────────────────────────────────────────
+
+  const pausedAgents = agents.filter((a) => a.status === 'paused' || a.status === 'error');
+
+  const smartAssists = useMemo(() => {
+    const items: Array<{
+      readonly id: string;
+      readonly icon: React.ReactNode;
+      readonly message: string;
+      readonly actionLabel: string;
+      readonly onAction: () => void;
+    }> = [];
+
+    if (todayBookings.length > 0) {
+      items.push({
+        id: 'booking-reminders',
+        icon: <CalendarDays size={14} />,
+        message: `You have ${todayBookings.length} appointment${todayBookings.length > 1 ? 's' : ''} today — need to send reminders?`,
+        actionLabel: 'Send Reminders',
+        onAction: async () => {
+          try {
+            await createIssue({
+              title: `Send reminders for ${todayBookings.length} appointment(s) today`,
+              description: `Review today's bookings and send confirmation reminders to each client. Bookings: ${todayBookings.map((b) => `${b.clientName} at ${b.time}`).join(', ')}`,
+              priority: 'high',
+              assigneeAgentId: AGENT_IDS.operationsManager,
+            });
+            await invokeHeartbeat(AGENT_IDS.operationsManager);
+            toast('Reminder task created and agent notified');
+          } catch (err) {
+            toast(`Failed: ${err}`, 'error');
+          }
+        },
+      });
+    }
+
+    for (const agent of pausedAgents.slice(0, 1)) {
+      items.push({
+        id: `agent-attention-${agent.id}`,
+        icon: <Zap size={14} />,
+        message: `${agent.name} needs attention — status: ${agent.status}`,
+        actionLabel: 'Wake Agent',
+        onAction: async () => {
+          try {
+            await createIssue({
+              title: `Investigate and restart ${agent.name}`,
+              description: `Agent ${agent.name} is in "${agent.status}" state. Check for errors, clear any stuck tasks, and restart.`,
+              priority: 'high',
+              assigneeAgentId: AGENT_IDS.operationsManager,
+            });
+            await invokeHeartbeat(agent.id);
+            toast(`Wake-up sent to ${agent.name}`);
+          } catch (err) {
+            toast(`Failed: ${err}`, 'error');
+          }
+        },
+      });
+    }
+
+    return items;
+  }, [todayBookings, pausedAgents, toast]);
+
+  // ── Quick Actions ──────────────────────────────────────────────────────
+
   const handleQuickAction = async (action: string) => {
     setBusy(action);
     try {
@@ -191,40 +277,47 @@ export function Overview() {
 
   return (
     <div className="space-y-8">
+      {/* Smart Assists */}
+      {!loading && smartAssists.length > 0 && (
+        <SmartAssistList assists={smartAssists} />
+      )}
+
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-3">
-        <button
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ActionButton
           onClick={() => handleQuickAction('schedule-day')}
+          icon={<CalendarDays size={16} />}
+          label="Schedule Day"
+          variant="primary"
+          size="md"
           disabled={busy !== null}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0071e3] text-white text-sm font-medium hover:bg-[#0071e3]/80 transition-colors disabled:opacity-50"
-        >
-          {busy === 'schedule-day' ? <Loader2 size={16} className="animate-spin" /> : <CalendarDays size={16} />}
-          Schedule Day
-        </button>
-        <button
+        />
+        <ActionButton
           onClick={() => handleQuickAction('wake-all')}
+          icon={<Zap size={16} />}
+          label="Wake All"
+          variant="success"
+          size="md"
           disabled={busy !== null}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#34c759]/20 text-[#34c759] text-sm font-medium hover:bg-[#34c759]/30 transition-colors disabled:opacity-50"
-        >
-          {busy === 'wake-all' ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-          Wake All Agents
-        </button>
-        <button
+        />
+        <ActionButton
           onClick={() => handleQuickAction('content-post')}
+          icon={<Send size={16} />}
+          label="Create Post"
+          variant="accent"
+          color="#ff375f"
+          size="md"
           disabled={busy !== null}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff375f]/20 text-[#ff375f] text-sm font-medium hover:bg-[#ff375f]/30 transition-colors disabled:opacity-50"
-        >
-          {busy === 'content-post' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          Create Post
-        </button>
-        <button
+        />
+        <ActionButton
           onClick={() => handleQuickAction('review-check')}
+          icon={<Star size={16} />}
+          label="Check Reviews"
+          variant="accent"
+          color="#bf5af2"
+          size="md"
           disabled={busy !== null}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#bf5af2]/20 text-[#bf5af2] text-sm font-medium hover:bg-[#bf5af2]/30 transition-colors disabled:opacity-50"
-        >
-          {busy === 'review-check' ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} />}
-          Check Reviews
-        </button>
+        />
       </div>
 
       {/* Metric Cards */}
@@ -232,10 +325,10 @@ export function Overview() {
         {metricCards.map((card) => (
           <div
             key={card.label}
-           
             className="rounded-2xl px-5 py-6 text-center bg-[#1a1a1a]"
+            style={{ boxShadow: `0 0 30px ${card.color}10` }}
           >
-            <p className="text-3xl font-bold" style={{ color: card.color }}>
+            <p className="text-4xl font-bold" style={{ color: card.color }}>
               {loading ? '—' : card.value}
             </p>
             <p className="mt-1 text-sm text-neutral-400">{card.label}</p>
@@ -247,38 +340,42 @@ export function Overview() {
         {/* Today's Agenda */}
         <div>
           <h2 className="mb-4 text-lg font-semibold text-white">Today's Agenda</h2>
-          <div className="space-y-3">
-            {todayBookings.length === 0 && !loading && (
-              <p className="text-sm text-neutral-500">No appointments today.</p>
-            )}
-            {todayBookings.map((b) => (
-              <div
-                key={b.id}
-               
-                className="flex items-center justify-between rounded-xl px-5 py-4 bg-[#1a1a1a]"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-[#0071e3]">{b.time}</span>
-                  <div>
-                    <p className="font-medium text-white">{b.clientName}</p>
-                    <p className="text-xs text-neutral-400">
-                      {b.tier.charAt(0).toUpperCase() + b.tier.slice(1)} &middot;{' '}
-                      {b.location === 'in-person' ? b.address : 'Remote'}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-medium"
-                  style={{
-                    backgroundColor: b.status === 'confirmed' ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)',
-                    color: b.status === 'confirmed' ? '#34c759' : '#ff9f0a',
-                  }}
+          {todayBookings.length === 0 && !loading ? (
+            <EmptyState
+              icon={CalendarDays}
+              title="No appointments today"
+              description="When customers book at cal.com/simplytech.ai, their appointments will show up here."
+            />
+          ) : (
+            <div className="space-y-3">
+              {todayBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex items-center justify-between rounded-xl px-5 py-4 bg-[#1a1a1a]"
                 >
-                  {b.status}
-                </span>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-[#0071e3]">{b.time}</span>
+                    <div>
+                      <p className="font-medium text-white">{b.clientName}</p>
+                      <p className="text-xs text-neutral-400">
+                        {b.tier.charAt(0).toUpperCase() + b.tier.slice(1)} &middot;{' '}
+                        {b.location === 'in-person' ? b.address : 'Remote'}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-medium"
+                    style={{
+                      backgroundColor: b.status === 'confirmed' ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)',
+                      color: b.status === 'confirmed' ? '#34c759' : '#ff9f0a',
+                    }}
+                  >
+                    {b.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Activity Feed */}
@@ -295,25 +392,29 @@ export function Overview() {
             )}
           </div>
           <div className="space-y-2">
-            {activity.map((event) => (
-              <div
-                key={event.id}
-               
-                className="flex items-start gap-3 rounded-xl px-4 py-3 bg-[#1a1a1a]"
-              >
-                <span
-                  className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: typeColors[event.type] }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">{event.title}</p>
-                  <p className="text-xs text-neutral-500">{event.description}</p>
+            {activity.map((event) => {
+              const IconComponent = typeIcons[event.type] ?? Zap;
+              return (
+                <div
+                  key={event.id}
+                  className="flex items-start gap-3 rounded-xl px-4 py-3 bg-[#1a1a1a]"
+                >
+                  <span
+                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${typeColors[event.type]}20` }}
+                  >
+                    <IconComponent size={12} style={{ color: typeColors[event.type] }} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white">{event.title}</p>
+                    <p className="text-xs text-neutral-500">{event.description}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-neutral-600">
+                    {formatTime(event.timestamp)}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs text-neutral-600">
-                  {formatTime(event.timestamp)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

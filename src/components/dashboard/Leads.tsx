@@ -2,14 +2,23 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, X, Phone, Mail, Calendar, MessageSquare, ChevronRight,
-  Send, Link2, Loader2,
+  Send, Link2, UserPlus,
 } from 'lucide-react';
 import { leads } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
+import ActionButton from '../ui/ActionButton';
+import { EmptyState } from '../ui/EmptyState';
 import { createIssue, invokeHeartbeat, AGENT_IDS } from '../../services/paperclip';
 import type { Lead } from '../../types/crm';
 
 type KanbanColumn = 'new' | 'contacted' | 'booked' | 'completed';
+
+const COLUMN_PLACEHOLDERS: Record<KanbanColumn, string> = {
+  new: 'Incoming leads land here',
+  contacted: "Leads you've reached out to",
+  booked: 'Leads who booked appointments',
+  completed: 'Finished customers',
+};
 
 const COLUMNS: { key: KanbanColumn; label: string; color: string; borderColor: string; bgColor: string; statuses: Lead['status'][] }[] = [
   { key: 'new', label: 'New', color: '#ff9f0a', borderColor: 'border-l-[#ff9f0a]', bgColor: 'bg-[#ff9f0a]/10', statuses: ['new'] },
@@ -39,51 +48,43 @@ function LeadCard({ lead, column, onClick }: { lead: Lead; column: typeof COLUMN
 }
 
 function LeadDetailPanel({ lead, column, onClose }: { lead: Lead; column: typeof COLUMNS[number]; onClose: () => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleAction = async (action: string) => {
-    setBusy(action);
-    try {
-      switch (action) {
-        case 'contact': {
-          await createIssue({
-            title: `Contact lead: ${lead.name}`,
-            description: `New lead ${lead.name} from ${lead.source}. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}". Reach out within 2 hours with personalized message. Suggest the right tier.${lead.notes ? ` Notes: ${lead.notes}` : ''}`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Contact task sent to Lead Handler`);
-          break;
-        }
-        case 'book': {
-          await createIssue({
-            title: `Send booking link to ${lead.name}`,
-            description: `Lead ${lead.name} is qualified and ready to book. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}". Send them the booking link: cal.com/simplytech.ai with a personalized message recommending the right tier.`,
-            priority: 'high',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Booking link task sent to Lead Handler`);
-          break;
-        }
-        case 'nurture': {
-          await createIssue({
-            title: `Nurture lead: ${lead.name}`,
-            description: `Lead ${lead.name} hasn't converted yet. Start nurture sequence: Day 3 gentle follow-up, Day 7 share an AI tip, Day 14 final touchpoint. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}".`,
-            priority: 'medium',
-            assigneeAgentId: AGENT_IDS.leadHandler,
-          });
-          await invokeHeartbeat(AGENT_IDS.leadHandler);
-          toast(`Nurture sequence started for ${lead.name}`);
-          break;
-        }
+  const makeAction = (action: string) => async () => {
+    switch (action) {
+      case 'contact': {
+        await createIssue({
+          title: `Contact lead: ${lead.name}`,
+          description: `New lead ${lead.name} from ${lead.source}. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}". Reach out within 2 hours with personalized message. Suggest the right tier.${lead.notes ? ` Notes: ${lead.notes}` : ''}`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Contact task sent to Lead Handler`);
+        break;
       }
-    } catch (err) {
-      toast(`Action failed: ${err}`, 'error');
-    } finally {
-      setBusy(null);
+      case 'book': {
+        await createIssue({
+          title: `Send booking link to ${lead.name}`,
+          description: `Lead ${lead.name} is qualified and ready to book. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}". Send them the booking link: cal.com/simplytech.ai with a personalized message recommending the right tier.`,
+          priority: 'high',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Booking link task sent to Lead Handler`);
+        break;
+      }
+      case 'nurture': {
+        await createIssue({
+          title: `Nurture lead: ${lead.name}`,
+          description: `Lead ${lead.name} hasn't converted yet. Start nurture sequence: Day 3 gentle follow-up, Day 7 share an AI tip, Day 14 final touchpoint. Phone: ${lead.phone}, Email: ${lead.email}. Interest: "${lead.interest}".`,
+          priority: 'medium',
+          assigneeAgentId: AGENT_IDS.leadHandler,
+        });
+        await invokeHeartbeat(AGENT_IDS.leadHandler);
+        toast(`Nurture sequence started for ${lead.name}`);
+        break;
+      }
     }
   };
 
@@ -164,30 +165,32 @@ function LeadDetailPanel({ lead, column, onClose }: { lead: Lead; column: typeof
 
         {/* Actions */}
         <div className="flex gap-2 p-5 pt-0">
-          <button
-            onClick={() => handleAction('contact')}
-            disabled={busy !== null}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0071e3] text-white text-sm font-medium hover:bg-[#0071e3]/80 transition-colors disabled:opacity-50"
-          >
-            {busy === 'contact' ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            Contact
-          </button>
-          <button
-            onClick={() => handleAction('book')}
-            disabled={busy !== null}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#34c759] text-white text-sm font-medium hover:bg-[#34c759]/80 transition-colors disabled:opacity-50"
-          >
-            {busy === 'book' ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
-            Send Booking Link
-          </button>
-          <button
-            onClick={() => handleAction('nurture')}
-            disabled={busy !== null}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#bf5af2] text-white text-sm font-medium hover:bg-[#bf5af2]/80 transition-colors disabled:opacity-50"
-          >
-            {busy === 'nurture' ? <Loader2 size={14} className="animate-spin" /> : <Calendar size={14} />}
-            Nurture
-          </button>
+          <ActionButton
+            onClick={makeAction('contact')}
+            icon={<Send size={14} />}
+            label="Contact"
+            variant="accent"
+            color="#0071e3"
+            size="md"
+            className="flex-1 justify-center"
+          />
+          <ActionButton
+            onClick={makeAction('book')}
+            icon={<Link2 size={14} />}
+            label="Send Booking Link"
+            variant="success"
+            size="md"
+            className="flex-1 justify-center"
+          />
+          <ActionButton
+            onClick={makeAction('nurture')}
+            icon={<Calendar size={14} />}
+            label="Nurture"
+            variant="accent"
+            color="#bf5af2"
+            size="md"
+            className="flex-1 justify-center"
+          />
         </div>
       </motion.div>
     </motion.div>
@@ -211,6 +214,8 @@ export function Leads() {
     }
     return map;
   }, []);
+
+  const allEmpty = COLUMNS.every(col => grouped[col.key].length === 0);
 
   const selectedColumn = selectedLead
     ? COLUMNS.find(c => c.statuses.includes(selectedLead.status)) ?? COLUMNS[0]
@@ -296,50 +301,61 @@ export function Leads() {
                 <button onClick={() => setShowAddForm(false)} className="px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:text-white transition-colors">
                   Cancel
                 </button>
-                <button
-                  onClick={handleAddLead}
+                <ActionButton
+                  onClick={async () => { await handleAddLead(); }}
+                  icon={<Plus size={14} />}
+                  label="Save & Assign to Lead Handler"
+                  variant="success"
                   disabled={saving || !newLead.name.trim()}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#34c759] text-white text-sm font-medium hover:bg-[#34c759]/80 transition-colors disabled:opacity-50"
-                >
-                  {saving && <Loader2 size={14} className="animate-spin" />}
-                  Save & Assign to Lead Handler
-                </button>
+                />
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {COLUMNS.map((col) => (
-          <div key={col.key} className="bg-[#1a1a1a] rounded-xl border border-white/10 p-3">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
-                <span className="text-sm font-semibold text-white">{col.label}</span>
+      {/* Empty State or Kanban Board */}
+      {allEmpty ? (
+        <EmptyState
+          icon={UserPlus}
+          title="No leads yet"
+          description="Leads from calls, website visits, and referrals will appear here. Use the Add Lead button to manually add prospects."
+          actionLabel="Add Lead"
+          onAction={() => setShowAddForm(true)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {COLUMNS.map((col) => (
+            <div key={col.key} className="bg-[#1a1a1a] rounded-xl border border-white/10 p-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
+                  <span className="text-sm font-semibold text-white">{col.label}</span>
+                </div>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: `${col.color}20`, color: col.color }}
+                >
+                  {grouped[col.key].length}
+                </span>
               </div>
-              <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${col.color}20`, color: col.color }}
-              >
-                {grouped[col.key].length}
-              </span>
-            </div>
 
-            <div className="space-y-2">
-              <AnimatePresence>
-                {grouped[col.key].map((lead) => (
-                  <LeadCard key={lead.id} lead={lead} column={col} onClick={() => setSelectedLead(lead)} />
-                ))}
-              </AnimatePresence>
-              {grouped[col.key].length === 0 && (
-                <p className="text-xs text-gray-600 text-center py-4">No leads</p>
-              )}
+              <div className="space-y-2">
+                <AnimatePresence>
+                  {grouped[col.key].map((lead) => (
+                    <LeadCard key={lead.id} lead={lead} column={col} onClick={() => setSelectedLead(lead)} />
+                  ))}
+                </AnimatePresence>
+                {grouped[col.key].length === 0 && (
+                  <p className="text-xs text-gray-600 text-center py-4 italic">
+                    {COLUMN_PLACEHOLDERS[col.key]}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Detail Modal */}
       <AnimatePresence>
