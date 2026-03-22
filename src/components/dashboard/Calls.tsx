@@ -337,7 +337,7 @@ export function Calls() {
           <EmptyState
             icon={Phone}
             title="No calls yet"
-            description="When calls come in through SkipCalls at (818) 600-6825, they'll appear here with AI-generated summaries and one-click follow-up actions."
+            description="When calls come in through ElevenLabs at (361) 315-8585, they'll appear here with AI-generated summaries and one-click follow-up actions."
           />
         )}
       </div>

@@ -48,6 +48,21 @@ else
   fi
 fi
 
+# ── 2b. Start ElevenLabs Webhook Server ────────────────────────────────────
+echo "2️⃣b Starting ElevenLabs Webhook Server..."
+if lsof -i :3201 -t >/dev/null 2>&1; then
+  echo "   ElevenLabs webhook server already running on :3201"
+else
+  cd "$CRM_DIR"
+  node elevenlabs-webhook.mjs > /tmp/elevenlabs-webhook.log 2>&1 &
+  sleep 2
+  if curl -s http://localhost:3201/health >/dev/null 2>&1; then
+    echo "   ✅ ElevenLabs webhook server running on :3201"
+  else
+    echo "   ❌ ElevenLabs webhook server failed to start"
+  fi
+fi
+
 # ── 3. Start Cloudflare Tunnel ─────────────────────────────────────────────
 echo "3️⃣  Starting Cloudflare Tunnel..."
 if pgrep -f "cloudflared tunnel" >/dev/null 2>&1; then
@@ -114,6 +129,7 @@ echo ""
 echo "  🖥  Dashboard:  http://localhost:5173/internal/dashboard"
 echo "  📋 Paperclip:   http://localhost:3100"
 echo "  📧 Webhooks:    http://localhost:$WEBHOOK_PORT"
+echo "  📞 ElevenLabs:  http://localhost:3201"
 echo "  🌐 Public URL:  ${TUNNEL_URL:-check /tmp/cloudflared.log}"
 echo ""
 echo "  📞 Phone:       (818) 600-6825"
@@ -125,5 +141,6 @@ echo "  Logs:"
 echo "    tail -f /tmp/paperclip.log"
 echo "    tail -f /tmp/webhook-server.log"
 echo "    tail -f /tmp/cloudflared.log"
+echo "    tail -f /tmp/elevenlabs-webhook.log"
 echo "    tail -f /tmp/crm-dashboard.log"
 echo ""
