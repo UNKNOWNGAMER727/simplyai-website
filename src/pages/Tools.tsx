@@ -35,7 +35,7 @@ const businessTools = [
   { category: 'Website', name: 'Carrd or Next.js + Vercel', cost: '$0–2/mo' },
   { category: 'Booking', name: 'Cal.com', cost: 'Free' },
   { category: 'Payments', name: 'Stripe', cost: '2.9% per sale' },
-  { category: 'Phone AI', name: 'SkipCalls', cost: '$16.67/mo' },
+  { category: 'Phone AI', name: 'ElevenLabs (Simi)', cost: '~$22/mo' },
   { category: 'Social Media', name: 'Buffer', cost: 'Free' },
   { category: 'Local SEO', name: 'Google Business Profile', cost: 'Free' },
   { category: 'Cold Email', name: 'Apollo.io', cost: 'Free' },

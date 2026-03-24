@@ -12,6 +12,21 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// ── Load .env file (so PM2 always has correct env vars) ───────────────────────
+try {
+  const envFile = path.join(__dirname, '.env');
+  const lines = fs.readFileSync(envFile, 'utf-8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 0) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+    if (key && !process.env[key]) process.env[key] = val; // don't override already-set vars
+  }
+} catch { /* .env not found — rely on system env */ }
+
 // ── Config ────────────────────────────────────────────────────────────────────
 const PORT = 3201;
 const PAPERCLIP_URL = 'http://127.0.0.1:3100/api';
@@ -28,11 +43,11 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const CAL_API_KEY = process.env.CAL_API_KEY || process.env.VITE_CALCOM_API_KEY || '';
 const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET || '';
 
-// Cal.com event slugs → display names
+// Cal.com event slugs → display names + IDs (IDs from GET /v1/event-types)
 const CAL_EVENTS = {
-  'basic-ai-setup-300': { name: 'Basic AI Setup', price: '$300' },
-  'pro-ai-setup-500': { name: 'Pro AI Setup', price: '$500' },
-  'premium-ai-setup-1000': { name: 'Premium AI Setup', price: '$1,000' },
+  'basic-ai-setup-300': { name: 'Basic AI Setup', price: '$300', id: 5104292 },
+  'pro-ai-setup-500': { name: 'Pro AI Setup', price: '$500', id: 5104737 },
+  'premium-ai-setup-1000': { name: 'Premium AI Setup', price: '$1,000', id: 5104746 },
 };
 
 // Paperclip agent IDs (same as webhook-server.mjs)
@@ -44,6 +59,30 @@ const AGENTS = {
 
 // ── Call log file ─────────────────────────────────────────────────────────────
 const CALL_LOG_PATH = path.join(__dirname, 'elevenlabs-calls.json');
+
+// ── Leads store ───────────────────────────────────────────────────────────────
+const LEADS_PATH = path.join(__dirname, 'leads.json');
+
+function loadLeads() {
+  try { return JSON.parse(fs.readFileSync(LEADS_PATH, 'utf-8')); } catch { return []; }
+}
+
+function saveLeads(leads) {
+  fs.writeFileSync(LEADS_PATH, JSON.stringify(leads, null, 2));
+}
+
+function upsertLead(entry) {
+  const leads = loadLeads();
+  const idx = leads.findIndex((l) => l.phone === entry.phone && entry.phone);
+  if (idx >= 0) {
+    // Update existing — bump status if higher interest
+    const existing = leads[idx];
+    leads[idx] = { ...existing, ...entry, id: existing.id, createdAt: existing.createdAt };
+  } else {
+    leads.unshift(entry);
+  }
+  saveLeads(leads);
+}
 
 function loadCallLog() {
   try {
@@ -231,6 +270,20 @@ function buildBookingLinks(contactName, contactEmail) {
 async function handleHighInterest(parsed) {
   const { contactName, contactEmail, contactPhone, businessName, summary, durationSecs } = parsed;
   const displayName = contactName || businessName || contactPhone || 'Unknown Lead';
+
+  // Auto-create/update lead
+  upsertLead({
+    id: `lead-${parsed.callId}`,
+    name: displayName,
+    phone: contactPhone || '',
+    email: contactEmail || '',
+    source: 'simi-call',
+    status: 'new',
+    interest: 'high',
+    followUpDate: null,
+    notes: summary || '',
+    createdAt: new Date().toISOString(),
+  });
   const bookingLinks = buildBookingLinks(contactName, contactEmail);
 
   console.log(`  [high-interest] Processing lead: ${displayName}`);
@@ -311,6 +364,20 @@ async function handleLowInterest(parsed) {
 async function handleMediumInterest(parsed) {
   const { contactName, contactPhone, businessName, summary, durationSecs } = parsed;
   const displayName = contactName || businessName || contactPhone || 'Unknown';
+
+  // Auto-create/update lead for medium interest
+  upsertLead({
+    id: `lead-${parsed.callId}`,
+    name: displayName,
+    phone: contactPhone || '',
+    email: parsed.contactEmail || '',
+    source: 'simi-call',
+    status: 'new',
+    interest: parsed.interestLevel || 'medium',
+    followUpDate: null,
+    notes: summary || '',
+    createdAt: new Date().toISOString(),
+  });
   const bookingLinks = buildBookingLinks(parsed.contactName, parsed.contactEmail);
 
   console.log(`  [medium-interest] Processing: ${displayName}`);
@@ -456,6 +523,182 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ── Leads CRUD ───────────────────────────────────────────────────────────
+  if (req.method === 'GET' && req.url === '/leads') {
+    return respond(200, loadLeads());
+  }
+
+  if (req.method === 'POST' && req.url === '/leads') {
+    const rawBody = await readBody(req);
+    try {
+      const lead = JSON.parse(rawBody);
+      if (!lead.name && !lead.phone) return respond(400, { error: 'name or phone required' });
+      const entry = {
+        id: lead.id || `lead-manual-${Date.now()}`,
+        name: lead.name || '',
+        phone: lead.phone || '',
+        email: lead.email || '',
+        source: lead.source || 'manual',
+        status: lead.status || 'new',
+        interest: lead.interest || 'unknown',
+        followUpDate: lead.followUpDate || null,
+        notes: lead.notes || '',
+        createdAt: lead.createdAt || new Date().toISOString(),
+      };
+      upsertLead(entry);
+      return respond(200, { success: true, lead: entry });
+    } catch (err) {
+      return respond(500, { error: err.message });
+    }
+  }
+
+  if (req.method === 'PATCH' && req.url?.startsWith('/leads/')) {
+    const id = req.url.split('/leads/')[1];
+    const rawBody = await readBody(req);
+    try {
+      const patch = JSON.parse(rawBody);
+      const leads = loadLeads();
+      const idx = leads.findIndex((l) => l.id === id);
+      if (idx < 0) return respond(404, { error: 'Lead not found' });
+      leads[idx] = { ...leads[idx], ...patch };
+      saveLeads(leads);
+      return respond(200, { success: true, lead: leads[idx] });
+    } catch (err) {
+      return respond(500, { error: err.message });
+    }
+  }
+
+  if (req.method === 'DELETE' && req.url?.startsWith('/leads/')) {
+    const id = req.url.split('/leads/')[1];
+    const leads = loadLeads().filter((l) => l.id !== id);
+    saveLeads(leads);
+    return respond(200, { success: true });
+  }
+
+  // ── Cal.com Availability ──────────────────────────────────────────────────
+  if (req.method === 'GET' && req.url?.startsWith('/calcom/availability')) {
+    const params = new URL(req.url, `http://localhost:${PORT}`).searchParams;
+    const date = params.get('date');
+
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return respond(400, { error: 'Missing or invalid date param (YYYY-MM-DD)' });
+    }
+
+    // Reject past dates — give Simi a clear message to use a future date
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) {
+      return respond(400, { error: `${date} is in the past. Today is ${today}. Please check availability for a future date.` });
+    }
+
+    if (!CAL_API_KEY) {
+      return respond(500, { error: 'CAL_API_KEY not configured' });
+    }
+
+    try {
+      const startTime = `${date}T00:00:00.000Z`;
+      const endTime = `${date}T23:59:59.999Z`;
+
+      // Fetch availability for all event types in parallel using v1 API (more reliable)
+      const results = await Promise.all(
+        Object.entries(CAL_EVENTS).map(async ([slug, info]) => {
+          const qs = new URLSearchParams({
+            eventTypeId: String(info.id),
+            startTime,
+            endTime,
+            apiKey: CAL_API_KEY,
+          });
+          const url = `https://api.cal.com/v1/slots?${qs}`;
+          const r = await fetch(url);
+          const json = await r.json();
+          // v1 response: { slots: { "YYYY-MM-DD": [{ time }] } }
+          const daySlots = json.slots?.[date] || [];
+          return {
+            eventType: slug,
+            name: info.name,
+            price: info.price,
+            slots: daySlots.map((s) => s.time),
+          };
+        }),
+      );
+
+      console.log(`  [calcom] Availability for ${date}: ${results.reduce((n, r) => n + r.slots.length, 0)} total slots`);
+      return respond(200, { date, availability: results });
+    } catch (err) {
+      console.error(`  [calcom] Availability error: ${err.message}`);
+      return respond(500, { error: err.message });
+    }
+  }
+
+  // ── Cal.com Book Appointment ────────────────────────────────────────────────
+  if (req.method === 'POST' && req.url === '/calcom/book') {
+    const rawBody = await readBody(req);
+
+    try {
+      const { name, email, phone, date, time, eventType } = JSON.parse(rawBody);
+
+      if (!name || !email || !time || !eventType) {
+        return respond(400, { error: 'Missing required fields: name, email, time, eventType' });
+      }
+
+      // Reject past booking times
+      if (new Date(time) < new Date()) {
+        const today = new Date().toISOString().split('T')[0];
+        return respond(400, { error: `Cannot book in the past. Today is ${today}. Please use check_availability to find a future time slot.` });
+      }
+      if (!CAL_API_KEY) {
+        return respond(500, { error: 'CAL_API_KEY not configured' });
+      }
+      if (!CAL_EVENTS[eventType]) {
+        return respond(400, { error: `Invalid eventType. Must be one of: ${Object.keys(CAL_EVENTS).join(', ')}` });
+      }
+
+      const eventTypeId = CAL_EVENTS[eventType].id;
+
+      // Cal.com v1 booking API (more reliable than v2 for slug-based bookings)
+      const bookingPayload = {
+        eventTypeId,
+        start: time,
+        responses: {
+          name,
+          email,
+          ...(phone ? { phone } : {}),
+        },
+        metadata: {
+          source: 'elevenlabs-phone-agent',
+        },
+        timeZone: 'America/Los_Angeles',
+        language: 'en',
+      };
+
+      const r = await fetch(`https://api.cal.com/v1/bookings?apiKey=${CAL_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      const json = await r.json();
+
+      if (r.ok && (json.uid || json.id)) {
+        console.log(`  [calcom] Booking created: ${name} — ${eventType} at ${time} (uid: ${json.uid})`);
+        return respond(200, {
+          success: true,
+          booking: {
+            uid: json.uid,
+            startTime: json.startTime || time,
+            eventType,
+            attendee: name,
+          },
+        });
+      } else {
+        console.error(`  [calcom] Booking failed:`, JSON.stringify(json));
+        return respond(422, { success: false, error: json.message || json.error || 'Booking failed', details: json });
+      }
+    } catch (err) {
+      console.error(`  [calcom] Booking error: ${err.message}`);
+      return respond(500, { error: err.message });
+    }
+  }
+
   respond(404, { error: 'Not found' });
 });
 
@@ -465,6 +708,8 @@ server.listen(PORT, () => {
   console.log(`  Health: http://localhost:${PORT}/health`);
   console.log(`  Webhook: POST http://localhost:${PORT}/elevenlabs/post-call`);
   console.log(`  Call Log: GET http://localhost:${PORT}/calls`);
+  console.log(`  Cal Availability: GET http://localhost:${PORT}/calcom/availability?date=YYYY-MM-DD`);
+  console.log(`  Cal Book: POST http://localhost:${PORT}/calcom/book`);
   console.log(`  Telegram: ${TELEGRAM_BOT_TOKEN ? 'configured' : 'NOT configured'}`);
   console.log(`  Cal.com API: ${CAL_API_KEY ? 'configured' : 'NOT configured'}`);
   console.log(`  Agent ID: ${ELEVENLABS_AGENT_ID}`);

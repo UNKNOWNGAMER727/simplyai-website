@@ -8,6 +8,7 @@ import { useToast } from '../ui/Toast';
 import ActionButton from '../ui/ActionButton';
 import { EmptyState } from '../ui/EmptyState';
 import { createIssue, invokeHeartbeat, AGENT_IDS } from '../../services/paperclip';
+import { fetchBookings } from '../../services/calcom';
 import type { Lead } from '../../types/crm';
 
 type KanbanColumn = 'new' | 'contacted' | 'booked' | 'completed';
@@ -216,8 +217,49 @@ export function Leads() {
 
   const loadLeads = useCallback(async () => {
     try {
-      const res = await fetch('/webhook-api/leads');
-      if (res.ok) setAllLeads(await res.json());
+      const [res, calBookings] = await Promise.allSettled([
+        fetch('/webhook-api/leads'),
+        fetchBookings(),
+      ]);
+
+      if (res.status !== 'fulfilled' || !res.value.ok) return;
+      const leads: Lead[] = await res.value.json();
+
+      // Build set of attendee names+emails from active (non-cancelled) Cal.com bookings
+      const activeCalNames = new Set<string>();
+      const activeCalEmails = new Set<string>();
+      if (calBookings.status === 'fulfilled') {
+        for (const b of calBookings.value) {
+          if (b.status === 'cancelled' || b.status === 'rejected') continue;
+          for (const a of b.attendees) {
+            if (a.name) activeCalNames.add(a.name.trim().toLowerCase());
+            if (a.email) activeCalEmails.add(a.email.trim().toLowerCase());
+          }
+        }
+      }
+
+      // Auto-downgrade booked leads whose Cal.com booking no longer exists
+      const fixed: Lead[] = [];
+      for (const lead of leads) {
+        if (lead.status === 'booked' && calBookings.status === 'fulfilled') {
+          const nameMatch = activeCalNames.has(lead.name.trim().toLowerCase());
+          const emailMatch = lead.email && activeCalEmails.has(lead.email.trim().toLowerCase());
+          if (!nameMatch && !emailMatch) {
+            // Booking gone — downgrade to contacted and persist
+            const updated = { ...lead, status: 'contacted' as Lead['status'] };
+            fetch(`/webhook-api/leads/${lead.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'contacted' }),
+            }).catch(() => {});
+            fixed.push(updated);
+            continue;
+          }
+        }
+        fixed.push(lead);
+      }
+
+      setAllLeads(fixed);
     } catch { /* webhook server might not be running */ }
   }, []);
 

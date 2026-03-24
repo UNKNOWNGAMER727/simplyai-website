@@ -17,7 +17,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/calcom/, '/v2'),
       },
       '/webhook-api': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/webhook-api/, ''),
       },

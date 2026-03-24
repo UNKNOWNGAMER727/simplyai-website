@@ -120,6 +120,23 @@ export async function addComment(
   });
 }
 
+export interface PaperclipComment {
+  readonly id: string;
+  readonly issueId: string;
+  readonly authorAgentId: string | null;
+  readonly authorUserId: string | null;
+  readonly body: string;
+  readonly createdAt: string;
+}
+
+export async function getIssueComments(issueId: string): Promise<PaperclipComment[]> {
+  return apiFetch<PaperclipComment[]>(`/issues/${issueId}/comments`);
+}
+
+export async function getIssue(issueId: string): Promise<PaperclipIssue> {
+  return apiFetch<PaperclipIssue>(`/issues/${issueId}`);
+}
+
 // ── Agent ID constants (Simply AI team) ────────────────────────────────────
 
 export const AGENT_IDS = {

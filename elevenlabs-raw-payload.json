@@ -1,0 +1,560 @@
+{
+  "type": "post_call_transcription",
+  "event_timestamp": 1774304631,
+  "data": {
+    "agent_id": "agent_4501kmad398vfvxv9bd6ztm5abg6",
+    "agent_name": "Simi - Simply AI Assistant",
+    "status": "done",
+    "user_id": "+18188188654",
+    "branch_id": "agtbrch_0501kmad3b2gfawvn04wtxv0yqpy",
+    "version_id": "agtvrsn_2201kmchbqzqevn8ewb3fq9z1xw6",
+    "metadata": {
+      "start_time_unix_secs": 1774304600,
+      "accepted_time_unix_secs": 1774304601,
+      "call_duration_secs": 23,
+      "cost": 154,
+      "deletion_settings": {
+        "deletion_time_unix_secs": null,
+        "deleted_logs_at_time_unix_secs": null,
+        "deleted_audio_at_time_unix_secs": null,
+        "deleted_transcript_at_time_unix_secs": null,
+        "delete_transcript_and_pii": false,
+        "delete_audio": false
+      },
+      "feedback": {
+        "type": null,
+        "overall_score": null,
+        "likes": 0,
+        "dislikes": 0,
+        "rating": null,
+        "comment": null
+      },
+      "authorization_method": "signed_url",
+      "charging": {
+        "dev_discount": false,
+        "is_burst": false,
+        "tier": "creator",
+        "llm_usage": {
+          "irreversible_generation": {
+            "model_usage": {
+              "qwen3-30b-a3b": {
+                "input": {
+                  "tokens": 2953,
+                  "price": 0.00070872
+                },
+                "input_cache_read": {
+                  "tokens": 0,
+                  "price": 0
+                },
+                "input_cache_write": {
+                  "tokens": 0,
+                  "price": 0
+                },
+                "output_total": {
+                  "tokens": 37,
+                  "price": 0.000185
+                }
+              }
+            }
+          },
+          "initiated_generation": {
+            "model_usage": {
+              "qwen3-30b-a3b": {
+                "input": {
+                  "tokens": 2953,
+                  "price": 0.00070872
+                },
+                "input_cache_read": {
+                  "tokens": 0,
+                  "price": 0
+                },
+                "input_cache_write": {
+                  "tokens": 0,
+                  "price": 0
+                },
+                "output_total": {
+                  "tokens": 37,
+                  "price": 0.000185
+                }
+              }
+            }
+          }
+        },
+        "llm_price": 0.00089372,
+        "llm_charge": 4,
+        "call_charge": 150,
+        "free_minutes_consumed": 0,
+        "free_llm_dollars_consumed": 0
+      },
+      "phone_call": {
+        "direction": "inbound",
+        "phone_number_id": "phnum_3301kmb78tybe6fapqasr3ejgn83",
+        "agent_number": "+13613158585",
+        "external_number": "+18188188654",
+        "type": "twilio",
+        "stream_sid": "MZfa1e7321e6ecdb0a52a6112ddd02c260",
+        "call_sid": "CA66f893c91de19e00c2f96c848bd32e9d"
+      },
+      "batch_call": null,
+      "termination_reason": "Call ended by remote party",
+      "error": null,
+      "warnings": [],
+      "main_language": "en",
+      "rag_usage": null,
+      "text_only": false,
+      "features_usage": {
+        "language_detection": {
+          "enabled": true,
+          "used": false
+        },
+        "transfer_to_agent": {
+          "enabled": false,
+          "used": false
+        },
+        "transfer_to_number": {
+          "enabled": false,
+          "used": false
+        },
+        "multivoice": {
+          "enabled": false,
+          "used": false
+        },
+        "dtmf_tones": {
+          "enabled": false,
+          "used": false
+        },
+        "external_mcp_servers": {
+          "enabled": false,
+          "used": false
+        },
+        "pii_zrm_workspace": false,
+        "pii_zrm_agent": false,
+        "tool_dynamic_variable_updates": {
+          "enabled": false,
+          "used": false
+        },
+        "is_livekit": false,
+        "voicemail_detection": {
+          "enabled": false,
+          "used": false
+        },
+        "workflow": {
+          "enabled": false,
+          "tool_node": {
+            "enabled": false,
+            "used": false
+          },
+          "standalone_agent_node": {
+            "enabled": false,
+            "used": false
+          },
+          "phone_number_node": {
+            "enabled": false,
+            "used": false
+          },
+          "end_node": {
+            "enabled": false,
+            "used": false
+          }
+        },
+        "agent_testing": {
+          "enabled": true,
+          "tests_ran_after_last_modification": false,
+          "tests_ran_in_last_7_days": false
+        },
+        "versioning": {
+          "enabled": true,
+          "used": false
+        }
+      },
+      "eleven_assistant": {
+        "is_eleven_assistant": false
+      },
+      "initiator_id": null,
+      "conversation_initiation_source": "twilio",
+      "conversation_initiation_source_version": null,
+      "timezone": null,
+      "async_metadata": null,
+      "whatsapp": null,
+      "agent_created_from": "ui",
+      "agent_last_updated_from": "api"
+    },
+    "analysis": {
+      "evaluation_criteria_results": {
+        "services_explained": {
+          "criteria_id": "services_explained",
+          "result": "failure",
+          "rationale": "The agent has not yet explained Simply AI's services or their benefits to the business. The conversation is still in the initial discovery phase, gathering information about the user's business type."
+        },
+        "interest_identified": {
+          "criteria_id": "interest_identified",
+          "result": "success",
+          "rationale": "The user explicitly stated, \"Looking to get AI set up for my business,\" clearly indicating their interest. The agent acknowledged this by saying, \"Oh cool.\""
+        },
+        "consultation_offered": {
+          "criteria_id": "consultation_offered",
+          "result": "failure",
+          "rationale": "The agent did not offer to book a free consultation. The conversation ended with the agent asking for more details about the user's business type, indicating it's too early for a consultation offer."
+        },
+        "natural_conversation": {
+          "criteria_id": "natural_conversation",
+          "result": "success",
+          "rationale": "The agent used conversational language like \"Hey!\", \"Oh cool\", and asked open-ended questions to gather information, maintaining a warm and natural tone without sounding scripted."
+        }
+      },
+      "data_collection_results": {
+        "business_name": {
+          "data_collection_id": "business_name",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The name of the business contacted.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The user has not yet specified the name of their business in the provided transcript."
+        },
+        "contact_name": {
+          "data_collection_id": "contact_name",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The name of the person the agent spoke with.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The transcript does not contain any mention of the user's name, making it impossible to extract the name of the person the agent spoke with."
+        },
+        "contact_email": {
+          "data_collection_id": "contact_email",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The email address provided for consultation booking or follow-up.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The transcript does not contain any mention of an email address from the user or agent."
+        },
+        "contact_phone": {
+          "data_collection_id": "contact_phone",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The phone number provided for consultation booking or follow-up.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The conversation does not contain any phone numbers provided for consultation booking or follow-up."
+        },
+        "interest_level": {
+          "data_collection_id": "interest_level",
+          "value": "highly_interested",
+          "json_schema": {
+            "type": "string",
+            "description": "The business's level of interest in Simply AI's services.",
+            "enum": [
+              "highly_interested",
+              "moderately_interested",
+              "not_interested",
+              "maybe_later"
+            ],
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The user explicitly states, \"Looking to get AI set up for my business,\" indicating a strong interest in Simply AI's services."
+        },
+        "consultation_booked": {
+          "data_collection_id": "consultation_booked",
+          "value": null,
+          "json_schema": {
+            "type": "boolean",
+            "description": "Whether a free consultation appointment was successfully booked.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The conversation does not contain any information about a free consultation appointment being booked, successfully or otherwise."
+        }
+      },
+      "evaluation_criteria_results_list": [
+        {
+          "criteria_id": "services_explained",
+          "result": "failure",
+          "rationale": "The agent has not yet explained Simply AI's services or their benefits to the business. The conversation is still in the initial discovery phase, gathering information about the user's business type."
+        },
+        {
+          "criteria_id": "interest_identified",
+          "result": "success",
+          "rationale": "The user explicitly stated, \"Looking to get AI set up for my business,\" clearly indicating their interest. The agent acknowledged this by saying, \"Oh cool.\""
+        },
+        {
+          "criteria_id": "consultation_offered",
+          "result": "failure",
+          "rationale": "The agent did not offer to book a free consultation. The conversation ended with the agent asking for more details about the user's business type, indicating it's too early for a consultation offer."
+        },
+        {
+          "criteria_id": "natural_conversation",
+          "result": "success",
+          "rationale": "The agent used conversational language like \"Hey!\", \"Oh cool\", and asked open-ended questions to gather information, maintaining a warm and natural tone without sounding scripted."
+        }
+      ],
+      "data_collection_results_list": [
+        {
+          "data_collection_id": "business_name",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The name of the business contacted.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The user has not yet specified the name of their business in the provided transcript."
+        },
+        {
+          "data_collection_id": "contact_name",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The name of the person the agent spoke with.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The transcript does not contain any mention of the user's name, making it impossible to extract the name of the person the agent spoke with."
+        },
+        {
+          "data_collection_id": "contact_email",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The email address provided for consultation booking or follow-up.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The transcript does not contain any mention of an email address from the user or agent."
+        },
+        {
+          "data_collection_id": "contact_phone",
+          "value": null,
+          "json_schema": {
+            "type": "string",
+            "description": "The phone number provided for consultation booking or follow-up.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The conversation does not contain any phone numbers provided for consultation booking or follow-up."
+        },
+        {
+          "data_collection_id": "interest_level",
+          "value": "highly_interested",
+          "json_schema": {
+            "type": "string",
+            "description": "The business's level of interest in Simply AI's services.",
+            "enum": [
+              "highly_interested",
+              "moderately_interested",
+              "not_interested",
+              "maybe_later"
+            ],
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The user explicitly states, \"Looking to get AI set up for my business,\" indicating a strong interest in Simply AI's services."
+        },
+        {
+          "data_collection_id": "consultation_booked",
+          "value": null,
+          "json_schema": {
+            "type": "boolean",
+            "description": "Whether a free consultation appointment was successfully booked.",
+            "enum": null,
+            "is_system_provided": false,
+            "dynamic_variable": "",
+            "constant_value": ""
+          },
+          "rationale": "The conversation does not contain any information about a free consultation appointment being booked, successfully or otherwise."
+        }
+      ],
+      "call_successful": "failure",
+      "transcript_summary": "The user contacted Simply AI to inquire about setting up AI for their business. The agent is currently gathering information about the user's business type to determine how best to assist them.",
+      "call_summary_title": "AI Setup for Business"
+    },
+    "conversation_initiation_client_data": {
+      "conversation_config_override": {
+        "turn": null,
+        "tts": null,
+        "conversation": null,
+        "agent": null
+      },
+      "custom_llm_extra_body": {},
+      "user_id": null,
+      "source_info": {
+        "source": null,
+        "version": null
+      },
+      "branch_id": null,
+      "dynamic_variables": {
+        "system__agent_id": "agent_4501kmad398vfvxv9bd6ztm5abg6",
+        "system__agent_turns": 2,
+        "system__current_agent_turns": 2,
+        "system__current_subagent_turns": 2,
+        "system__current_agent_id": "agent_4501kmad398vfvxv9bd6ztm5abg6",
+        "system__conversation_id": "conv_2901kmecq8j7f80vanbh17fzb2er",
+        "system__call_duration_secs": 22,
+        "system__time_utc": "2026-03-23T22:23:43.282915+00:00",
+        "system__time": "Monday, 22:23 23 March 2026",
+        "system__timezone": null,
+        "system__is_text_only": false,
+        "system__caller_id": "+18188188654",
+        "system__called_number": "+13613158585",
+        "system__call_sid": "CA66f893c91de19e00c2f96c848bd32e9d",
+        "system__conversation_history": "{\"x-elevenlabs-history\": true, \"entries\": [{\"role\": \"agent\", \"message\": \"Hey! Thanks for calling Simply AI. Are you an existing customer who needs some help, or are you looking to get AI set up for your business?\"}, {\"role\": \"user\", \"message\": \"Looking to get AI set up for my business.\"}, {\"role\": \"agent\", \"message\": \"Oh cool, what kind of business do you run? Like, is it retail, services, maybe a small office? Just trying to get a feel for how we can help...\"}]}"
+      }
+    },
+    "environment": "production",
+    "hiding_reason": null,
+    "conversation_id": "conv_2901kmecq8j7f80vanbh17fzb2er",
+    "has_audio": true,
+    "has_user_audio": true,
+    "has_response_audio": true,
+    "transcript": [
+      {
+        "role": "agent",
+        "agent_metadata": {
+          "agent_id": "agent_4501kmad398vfvxv9bd6ztm5abg6",
+          "branch_id": "agtbrch_0501kmad3b2gfawvn04wtxv0yqpy",
+          "workflow_node_id": null,
+          "version_id": "agtvrsn_2201kmchbqzqevn8ewb3fq9z1xw6"
+        },
+        "message": "Hey! Thanks for calling Simply AI. Are you an existing customer who needs some help, or are you looking to get AI set up for your business?",
+        "multivoice_message": null,
+        "tool_calls": [],
+        "tool_results": [],
+        "feedback": null,
+        "llm_override": null,
+        "time_in_call_secs": 1,
+        "conversation_turn_metrics": {
+          "metrics": {
+            "convai_tts_service_ttfb": {
+              "elapsed_time": 0.6290225220000139
+            }
+          },
+          "convai_asr_provider": null,
+          "convai_tts_model": "eleven_v3_conversational"
+        },
+        "rag_retrieval_info": null,
+        "llm_usage": null,
+        "interrupted": false,
+        "original_message": null,
+        "source_medium": null,
+        "file_input": null
+      },
+      {
+        "role": "user",
+        "agent_metadata": null,
+        "message": "Looking to get AI set up for my business.",
+        "multivoice_message": null,
+        "tool_calls": [],
+        "tool_results": [],
+        "feedback": null,
+        "llm_override": null,
+        "time_in_call_secs": 11,
+        "conversation_turn_metrics": {
+          "metrics": {
+            "convai_asr_trailing_service_latency": {
+              "elapsed_time": 0.0402320029998009
+            }
+          },
+          "convai_asr_provider": "Scribe v2.1 Realtime",
+          "convai_tts_model": null
+        },
+        "rag_retrieval_info": null,
+        "llm_usage": null,
+        "interrupted": false,
+        "original_message": null,
+        "source_medium": "audio",
+        "file_input": null
+      },
+      {
+        "role": "agent",
+        "agent_metadata": {
+          "agent_id": "agent_4501kmad398vfvxv9bd6ztm5abg6",
+          "branch_id": "agtbrch_0501kmad3b2gfawvn04wtxv0yqpy",
+          "workflow_node_id": null,
+          "version_id": "agtvrsn_2201kmchbqzqevn8ewb3fq9z1xw6"
+        },
+        "message": "Oh cool, what kind of business do you run? Like, is it retail, services, maybe a small office? Just trying to get a feel for how we can help...",
+        "multivoice_message": null,
+        "tool_calls": [],
+        "tool_results": [],
+        "feedback": null,
+        "llm_override": null,
+        "time_in_call_secs": 15,
+        "conversation_turn_metrics": {
+          "metrics": {
+            "convai_llm_service_ttf_sentence": {
+              "elapsed_time": 0.20657450699991387
+            },
+            "convai_llm_service_ttfb": {
+              "elapsed_time": 0.11334331299985934
+            },
+            "convai_llm_service_tt_last_sentence": {
+              "elapsed_time": 0.4114935500001593
+            },
+            "convai_tts_service_ttfb": {
+              "elapsed_time": 0.3405436380003266
+            }
+          },
+          "convai_asr_provider": null,
+          "convai_tts_model": "eleven_v3_conversational"
+        },
+        "rag_retrieval_info": null,
+        "llm_usage": {
+          "model_usage": {
+            "qwen3-30b-a3b": {
+              "input": {
+                "tokens": 2953,
+                "price": 0.00070872
+              },
+              "input_cache_read": {
+                "tokens": 0,
+                "price": 0
+              },
+              "input_cache_write": {
+                "tokens": 0,
+                "price": 0
+              },
+              "output_total": {
+                "tokens": 37,
+                "price": 0.000185
+              }
+            }
+          }
+        },
+        "interrupted": true,
+        "original_message": "Oh cool, what kind of business do you run? Like, is it retail, services, maybe a small office? Just trying to get a feel for how we can help.",
+        "source_medium": null,
+        "file_input": null
+      }
+    ]
+  }
+}

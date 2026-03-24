@@ -14,12 +14,12 @@ const HTML_FILE = path.join(__dir, 'agent-hq.html');
 
 const AGENTS = [
   {
-    id: 'landing',
-    outputFile: '/private/tmp/claude-501/-Users-kyleopenclaw/2730cbe0-b344-4992-8fc8-0dba2fb4d49f/tasks/aa9520ab0c1fe2f16.output',
+    id: 'mobile',
+    outputFile: '/private/tmp/claude-501/-Users-kyleopenclaw/2730cbe0-b344-4992-8fc8-0dba2fb4d49f/tasks/a16fa53b9413c2ad8.output',
   },
   {
-    id: 'crm',
-    outputFile: '/private/tmp/claude-501/-Users-kyleopenclaw/2730cbe0-b344-4992-8fc8-0dba2fb4d49f/tasks/afc26672d4b1597f8.output',
+    id: 'webhook',
+    outputFile: '/private/tmp/claude-501/-Users-kyleopenclaw/2730cbe0-b344-4992-8fc8-0dba2fb4d49f/tasks/a1a47e5c48bcb8df1.output',
   },
 ];
 

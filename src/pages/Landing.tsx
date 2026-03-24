@@ -646,9 +646,9 @@ export function Landing() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
               {[
-                { name: 'Basic', price: '$300', slug: 'basic-ai-setup-300', time: '60 min' },
-                { name: 'Pro', price: '$500', slug: 'pro-ai-setup-500', time: '90 min' },
-                { name: 'Premium', price: '$1,000', slug: 'premium-ai-setup-1000', time: '2 hrs' },
+                { name: 'Solo', price: '$279', slug: 'basic-ai-setup-300', tagline: 'Just you' },
+                { name: 'Household', price: '$449', slug: 'pro-ai-setup-500', tagline: 'Up to 3 computers' },
+                { name: 'Business', price: '$799', slug: 'premium-ai-setup-1000', tagline: 'Up to 8 devices' },
               ].map((tier) => (
                 <a
                   key={tier.name}
@@ -658,7 +658,7 @@ export function Landing() {
                   className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl p-3 sm:p-5 text-center transition-all duration-300 min-h-[44px]"
                 >
                   <p className="text-[18px] sm:text-[20px] font-semibold text-white">{tier.price}</p>
-                  <p className="text-[12px] sm:text-[13px] text-white/50 mt-1">{tier.name} · {tier.time}</p>
+                  <p className="text-[12px] sm:text-[13px] text-white/50 mt-1">{tier.name} · {tier.tagline}</p>
                   <p className="text-[12px] text-[#0071e3] mt-2 font-medium">Book Now</p>
                 </a>
               ))}
