@@ -10,7 +10,7 @@
 Redesign the service offering, pricing tiers, and copy on the SimplyAI landing page (`src/pages/Landing.tsx`) to:
 
 1. Accurately reflect the actual service (Perplexity on computer + phone)
-2. Remove all time references from pricing cards
+2. Remove all time references from pricing cards and FAQ
 3. Use outcome-based language ("fully set up", "you leave knowing how to use it")
 4. Make pricing feel like a deal through savings math and slight price drops
 5. Rename tiers from Basic/Pro/Premium to Solo/Household/Business
@@ -25,8 +25,39 @@ Redesign the service offering, pricing tiers, and copy on the SimplyAI landing p
 
 ## New Pricing Tiers
 
-### Solo — $279 ~~$300~~
-**Tagline:** Just you, fully set up
+### Tier Data Shape
+
+Add two new optional fields to each tier object:
+```ts
+{
+  name: string
+  price: number
+  originalPrice?: number   // shown with strikethrough inline after new price
+  slug: string
+  desc: string
+  features: string[]
+  popular?: boolean        // if true: dark card treatment
+  savings?: string         // badge shown above the price (e.g. "Saves $390")
+}
+```
+
+**Strikethrough price** renders inline after the new price: `$279 ~~$300~~`
+**Savings badge** renders as a small pill/label directly above the tier name, in the same slot as the "Most popular" label.
+
+Render logic for the label slot:
+- If `savings` is set → show savings badge (green/`#34c759` text), suppress "Most popular" text
+- If `popular` is true but `savings` is not set → show "Most popular" (blue text, existing behavior)
+- The `popular` flag still controls dark card background/styling regardless of which label shows
+
+So Household (`popular: true`, `savings: "Saves $390"`) → shows dark card background + green "Saves $390" badge (NOT "Most popular" text).
+
+---
+
+### Solo — $279 (originalPrice: $300)
+**Slug:** `basic-ai-setup-300` — **keep existing Cal.com slug, do not change**
+**popular:** false
+**savings:** none
+**desc:** Just you, fully set up
 
 Features:
 - Perplexity on your computer
@@ -36,8 +67,11 @@ Features:
 
 ---
 
-### Household — $449 ~~$500~~ ⭐ Best Value · Saves $390
-**Tagline:** The whole family, fully set up
+### Household — $449 (originalPrice: $500) ⭐ popular: true
+**Slug:** `pro-ai-setup-500` — **keep existing Cal.com slug, do not change**
+**popular:** true (dark card treatment)
+**savings:** "Saves $390" (intentional display value — actual math is $388, rounded up for cleaner copy)
+**desc:** The whole family, fully set up
 
 Features:
 - Up to 3 computers
@@ -45,12 +79,13 @@ Features:
 - Each person gets their own walkthrough
 - Quick-start cheat sheet for each person
 
-Savings math: 3 × $279 = $837 → pay $449 = saves $388 (show as "Saves $390")
-
 ---
 
-### Business — $799 ~~$1,000~~ · Saves $1,434 vs solo visits
-**Tagline:** Your whole team, fully set up
+### Business — $799 (originalPrice: $1,000)
+**Slug:** `premium-ai-setup-1000` — **keep existing Cal.com slug, do not change**
+**popular:** false
+**savings:** "Saves $1,434" (intentional display value — actual math is $1,433, rounded up for cleaner copy)
+**desc:** Your whole team, fully set up
 
 Features:
 - Up to 8 devices
@@ -59,42 +94,54 @@ Features:
 - Custom AI prompt library built for your business
 - Quick-start cheat sheet for each person
 
-Savings math: 8 × $279 = $2,232 → pay $799 = saves $1,433 (show as "Saves $1,434")
-
 ---
 
 ## Copy Changes
 
 ### Remove everywhere:
-- All time references: "45-minute", "90-minute", "2-hour", "60 min", "90 min", "2 hrs"
-- Old tier names: Basic, Pro, Premium
-- Old prices: $300, $500, $1,000 (replace with new prices)
+- All time references: "45-minute", "90-minute", "2-hour", "60 min", "90 min", "2 hrs", "45 minutes", "90 minutes", "2 hours", "about 3 hours"
+- Old tier names in copy: Basic, Pro, Premium
+- Old prices in copy: $300, $500, $1,000 (replace with new prices where they appear as copy)
 
-### Add everywhere:
-- Phone setup called out explicitly in each tier's feature list
-- "Saves $X" badge on Household and Business tiers
-- Strikethrough old price next to new price on all tiers
-- Outcome language: "fully set up", "you leave knowing exactly what to do"
-
-### Hero/description copy update:
-From: "We come to your home, install Perplexity AI on your computer, and show you how to actually use it."
-To: "We come to you, install Perplexity AI on your computer, and show you how to use it on your phone too — so you're set up everywhere you actually use it."
+### Hero subtext update:
+**From:** "We come to your home, install Perplexity AI on your computer, and show you how to actually use it. No tech skills needed."
+**To:** "We come to you, install Perplexity AI on your computer and your phone — so you're set up everywhere you actually use it. No tech skills needed."
 
 ---
 
-## Files to Change
+## FAQ Updates
 
-- `src/pages/Landing.tsx` — tiers array, booking CTA mini-cards, hero subtext
+**Question 3 ("How long does a visit take?") — replace answer entirely:**
 
-### Specific changes in `tiers` array:
-- Rename slugs: `basic-ai-setup-300` → `solo-ai-setup-279`, etc. (or keep old slugs if Cal.com links can't change)
-- Update all `name`, `price`, `desc`, `features` fields
-- Add `savings` field for the badge text on Household and Business
-- Add `originalPrice` field for strikethrough display
+Old answer: `"Basic visits take about 45 minutes. Pro is around 90 minutes. Premium (multiple devices) is about 2 hours. We don't rush — we make sure you feel comfortable before we leave."`
 
-### Booking CTA section (bottom of page):
-- Update mini-cards: Solo $279 / Household $449 / Business $799
-- Remove time references ("60 min", "90 min", "2 hrs")
+New answer: `"It depends on how many devices you have and how many questions you have — we don't rush. We stay until you feel comfortable and confident using it. Most solo visits wrap up in under an hour, but we're not watching the clock."`
+
+All other FAQ answers remain unchanged.
+
+---
+
+## Testimonial Updates
+
+Update two testimonials to match new pricing/naming:
+
+**Barbara M.** — change `"Best $300 I've spent in years."` → `"Best $279 I've spent in years."`
+
+**Frank R.** — change `"After the Pro session"` → `"After the visit"` (remove specific tier name reference)
+
+---
+
+## Booking CTA Mini-Cards (bottom section)
+
+Replace the `time` field with a short `tagline` field. New mini-card data:
+
+```ts
+{ name: 'Solo',      price: '$279', slug: 'basic-ai-setup-300',    tagline: 'Just you' },
+{ name: 'Household', price: '$449', slug: 'pro-ai-setup-500',       tagline: 'Up to 3 computers' },
+{ name: 'Business',  price: '$799', slug: 'premium-ai-setup-1000',  tagline: 'Up to 8 devices' },
+```
+
+Render as: `{tier.name} · {tier.tagline}` (replaces `{tier.name} · {tier.time}`)
 
 ---
 
@@ -103,8 +150,6 @@ To: "We come to you, install Perplexity AI on your computer, and show you how to
 - Site layout and visual design
 - Color scheme
 - Section order
-- Cal.com booking links structure (just update slugs/prices)
-- FAQ content (mostly still accurate, minor review needed)
-- Testimonials
+- Cal.com booking links (keep all existing slugs as-is)
 - Trust badges
-- Email capture section (just added)
+- Email capture section
