@@ -1,12 +1,8 @@
 import {
   motion,
-  AnimatePresence,
   useScroll,
-  useTransform,
-  useMotionValueEvent,
   useReducedMotion,
   useInView,
-  motionValue,
 } from 'framer-motion';
 import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
@@ -299,6 +295,62 @@ function EmailCapture() {
   );
 }
 
+function HeroOrb() {
+  const shouldReduceMotion = useReducedMotion();
+  if (shouldReduceMotion) {
+    return (
+      <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-60px] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#0071e3]/20 blur-[80px] opacity-[0.15]" />
+      </div>
+    );
+  }
+  return (
+    <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      <motion.div
+        animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.4, 0.25] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-[-60px] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#0071e3]/20 blur-[80px]"
+      />
+    </div>
+  );
+}
+
+function HeroHeadline() {
+  const shouldReduceMotion = useReducedMotion();
+  const words = ['Finally', '—', 'AI', 'that', 'someone', 'actually', 'sets', 'up', 'for', 'you.'];
+
+  if (shouldReduceMotion) {
+    return (
+      <motion.h1
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7, delay: 0.07 }}
+        className="text-[40px] sm:text-[52px] lg:text-[60px] font-semibold tracking-tight leading-[1.05] text-[#1d1d1f] max-w-3xl mx-auto"
+      >
+        Finally — AI that someone actually sets up for you.
+      </motion.h1>
+    );
+  }
+
+  // Words 0–4: "Finally — AI that someone" (dark)
+  // Words 5–9: "actually sets up for you." (grey, matching original design)
+  return (
+    <h1 className="text-[40px] sm:text-[52px] lg:text-[60px] font-semibold tracking-tight leading-[1.05] text-[#1d1d1f] max-w-3xl mx-auto">
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.07 + i * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
+          className={`inline-block mr-[0.25em] ${i >= 5 ? 'text-[#86868b]' : ''}`}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </h1>
+  );
+}
+
 export function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -349,7 +401,9 @@ export function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-5 sm:px-6 pt-14 sm:pt-24 pb-14 sm:pb-20 text-center">
+      <section className="relative max-w-5xl mx-auto px-5 sm:px-6 pt-14 sm:pt-24 pb-14 sm:pb-20 text-center">
+        {/* Animated gradient orb */}
+        <HeroOrb />
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -360,16 +414,7 @@ export function Landing() {
           <span className="text-[12px] font-medium text-[#86868b]">Serving Los Angeles & Remote Nationwide</span>
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.07, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-[40px] sm:text-[52px] lg:text-[60px] font-semibold tracking-tight leading-[1.05] text-[#1d1d1f] max-w-3xl mx-auto"
-        >
-          Finally — AI that someone
-          <br className="hidden sm:block" />
-          <span className="text-[#86868b]"> actually sets up for you.</span>
-        </motion.h1>
+        <HeroHeadline />
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -386,18 +431,22 @@ export function Landing() {
           transition={{ duration: 0.7, delay: 0.21, ease: [0.25, 0.1, 0.25, 1] }}
           className="mt-7 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4 sm:px-0"
         >
-          <a
+          <motion.a
             href="#book"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className="inline-flex items-center justify-center gap-2 bg-[#0071e3] text-white px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-[#0077ED] transition-colors min-h-[52px] sm:min-h-[44px]"
           >
             Book Your Install <ArrowRight className="w-4 h-4" />
-          </a>
-          <a
+          </motion.a>
+          <motion.a
             href="tel:+13613158585"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className="inline-flex items-center justify-center gap-2 text-[#0071e3] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-[#0071e3]/5 transition-colors border border-[#0071e3]/20 min-h-[52px] sm:min-h-[44px]"
           >
             <Phone className="w-4 h-4" /> (361) 315-8585
-          </a>
+          </motion.a>
         </motion.div>
       </section>
 
