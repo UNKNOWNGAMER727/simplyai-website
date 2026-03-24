@@ -499,21 +499,24 @@ function DeviceDemo() {
   });
 
   // Laptop transforms
-  const laptopScale = useTransform(scrollYProgress, [0.15, 0.35], [0.8, 1]);
-  const laptopX = useTransform(scrollYProgress, [0.70, 0.85], [0, -60]);
-  const glowOpacity = useTransform(scrollYProgress, [0.15, 0.35], [0, 1]);
-  const headlineOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+  const laptopScale = useTransform(scrollYProgress, [0.10, 0.30], [0.88, 1]);
+  const laptopOpacity = useTransform(scrollYProgress, [0, 0.08], [0.4, 1]);
+  const laptopX = useTransform(scrollYProgress, [0.65, 0.80], [0, -30]);
+  const glowOpacity = useTransform(scrollYProgress, [0.10, 0.30], [0, 1]);
 
   // Bullet opacities
-  const bullet1Opacity = useTransform(scrollYProgress, [0.55, 0.60], [0, 1]);
-  const bullet2Opacity = useTransform(scrollYProgress, [0.60, 0.65], [0, 1]);
-  const bullet3Opacity = useTransform(scrollYProgress, [0.65, 0.70], [0, 1]);
+  const bullet1Opacity = useTransform(scrollYProgress, [0.50, 0.57], [0, 1]);
+  const bullet2Opacity = useTransform(scrollYProgress, [0.57, 0.64], [0, 1]);
+  const bullet3Opacity = useTransform(scrollYProgress, [0.64, 0.70], [0, 1]);
 
   // Phone transforms
-  const phoneOpacity = useTransform(scrollYProgress, [0.70, 0.85], [0, 1]);
-  const phoneX = useTransform(scrollYProgress, [0.70, 0.85], [60, 0]);
-  const phoneBulletsOpacity = useTransform(scrollYProgress, [0.85, 0.95], [0, 1]);
-  const continueOpacity = useTransform(scrollYProgress, [0.85, 1.0], [0, 1]);
+  const phoneOpacity = useTransform(scrollYProgress, [0.65, 0.80], [0, 1]);
+  const phoneX = useTransform(scrollYProgress, [0.65, 0.80], [50, 0]);
+  const phoneBulletsOpacity = useTransform(scrollYProgress, [0.80, 0.90], [0, 1]);
+  const continueOpacity = useTransform(scrollYProgress, [0.82, 1.0], [0, 1]);
+
+  // UI chrome
+  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
   if (shouldReduceMotion) {
     return (
@@ -548,19 +551,19 @@ function DeviceDemo() {
   }
 
   return (
-    <section ref={sectionRef} id="how" className="bg-[#1d1d1f] relative" style={{ minHeight: '300vh' }}>
+    <section ref={sectionRef} id="how" className="bg-[#1d1d1f] relative" style={{ minHeight: '220vh' }}>
       {/* Desktop sticky scroll */}
-      <div className="sticky top-0 h-screen hidden md:flex flex-col items-center justify-center overflow-hidden px-5">
-        {/* Section label + headline */}
-        <motion.div style={{ opacity: headlineOpacity }} className="text-center mb-10">
-          <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
-          <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-white">See it in action.</h2>
-        </motion.div>
+      <div className="sticky top-0 h-screen hidden md:flex flex-col items-center justify-center overflow-hidden px-5 gap-8">
+        {/* Always-visible header */}
+        <div className="text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30 mb-3">How It Works</p>
+          <h2 className="text-[32px] lg:text-[40px] font-semibold tracking-tight text-white">See it in action.</h2>
+        </div>
 
-        {/* Devices + step labels row */}
-        <div className="flex items-center gap-8 lg:gap-12">
+        {/* Device scene — laptop centered, phone slides in as overlay */}
+        <div className="relative flex items-end justify-center" style={{ width: 560 }}>
           {/* Laptop */}
-          <motion.div style={{ scale: laptopScale, x: laptopX }}>
+          <motion.div style={{ scale: laptopScale, x: laptopX, opacity: laptopOpacity }}>
             <LaptopScreen
               typedQuery={typedQuery}
               bullet1Opacity={bullet1Opacity}
@@ -570,74 +573,94 @@ function DeviceDemo() {
             />
           </motion.div>
 
-          {/* Phone */}
-          <motion.div style={{ x: phoneX }}>
+          {/* Phone — absolute, overlaps right edge of laptop when it arrives */}
+          <motion.div
+            style={{ x: phoneX, opacity: phoneOpacity }}
+            className="absolute -right-6 bottom-0 drop-shadow-2xl"
+          >
             <PhoneScreen
-              phoneOpacity={phoneOpacity}
+              phoneOpacity={MV_ONE}
               phoneBulletsOpacity={phoneBulletsOpacity}
             />
           </motion.div>
+        </div>
 
-          {/* Step labels */}
-          <div className="w-[200px] shrink-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeStep}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
-                <p className="text-white font-semibold text-[16px] leading-snug">
-                  {STEP_LABELS[activeStep].headline}
-                </p>
-                <p className="text-white/50 text-[13px] mt-1.5">
-                  {STEP_LABELS[activeStep].sub}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* "Continue anywhere." label */}
-            <motion.p
-              style={{ opacity: continueOpacity }}
-              className="text-[#0071e3] text-[12px] font-semibold mt-4 uppercase tracking-widest"
+        {/* Step label + progress dots — centered below devices */}
+        <div className="text-center" style={{ width: 340 }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeStep}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22 }}
             >
-              Continue anywhere.
-            </motion.p>
+              <p className="text-white font-semibold text-[17px] leading-snug">
+                {STEP_LABELS[activeStep].headline}
+              </p>
+              <p className="text-white/50 text-[13px] mt-2">
+                {STEP_LABELS[activeStep].sub}
+              </p>
+              {activeStep === 3 && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ opacity: continueOpacity }}
+                  className="text-[#0071e3] text-[11px] font-semibold mt-3 uppercase tracking-[0.15em]"
+                >
+                  Continue anywhere.
+                </motion.p>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Progress dots */}
+          <div className="flex justify-center gap-2 mt-5">
+            {STEP_LABELS.map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-full transition-all duration-300 ${
+                  i === activeStep
+                    ? 'w-4 h-1.5 bg-[#0071e3]'
+                    : 'w-1.5 h-1.5 bg-white/20'
+                }`}
+              />
+            ))}
           </div>
         </div>
+
+        {/* Scroll hint — fades out as user starts scrolling */}
+        <motion.div
+          style={{ opacity: scrollHintOpacity }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none"
+        >
+          <span className="text-[11px] uppercase tracking-[0.12em] text-white/25">Scroll to explore</span>
+          <ChevronDown className="w-3.5 h-3.5 text-white/20 animate-bounce" />
+        </motion.div>
       </div>
 
-      {/* Mobile static fallback */}
-      <div className="md:hidden py-16 px-5">
+      {/* Mobile static fallback — clean step list, no tiny mockups */}
+      <div className="md:hidden py-16 px-6">
         <div className="text-center mb-10">
-          <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
-          <h2 className="text-[28px] font-semibold tracking-tight text-white">See it in action.</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30 mb-3">How It Works</p>
+          <h2 className="text-[26px] font-semibold tracking-tight text-white">See it in action.</h2>
         </div>
-        {/* Scale the devices down to fit small screens */}
-        <div className="flex justify-center mb-10 overflow-hidden">
-          <div className="flex items-end gap-3 scale-[0.72] origin-top">
-            <LaptopScreen
-              typedQuery={DEMO_QUERY}
-              bullet1Opacity={MV_ONE}
-              bullet2Opacity={MV_ONE}
-              bullet3Opacity={MV_ONE}
-              glowOpacity={MV_ONE}
-            />
-            <PhoneScreen
-              phoneOpacity={MV_ONE}
-              phoneBulletsOpacity={MV_ONE}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-5 max-w-sm mx-auto">
+        <div className="space-y-6 max-w-xs mx-auto">
           {STEP_LABELS.map((s, i) => (
-            <div key={i}>
-              <p className="text-white text-[13px] font-semibold">{s.headline}</p>
-              <p className="text-white/40 text-[12px] mt-0.5">{s.sub}</p>
+            <div key={i} className="flex items-start gap-4">
+              <div className="w-7 h-7 rounded-full bg-[#0071e3]/20 border border-[#0071e3]/40 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[#0071e3] text-[11px] font-bold">{i + 1}</span>
+              </div>
+              <div>
+                <p className="text-white text-[15px] font-semibold leading-snug">{s.headline}</p>
+                <p className="text-white/40 text-[13px] mt-1">{s.sub}</p>
+              </div>
             </div>
           ))}
         </div>
+        <p className="text-center text-[#0071e3] text-[11px] font-semibold uppercase tracking-[0.15em] mt-10">
+          Continue anywhere.
+        </p>
       </div>
     </section>
   );
