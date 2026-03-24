@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: 'How long does a visit take?',
-    a: "Basic visits take about 45 minutes. Pro is around 90 minutes. Premium (multiple devices) is about 2 hours. We don't rush — we make sure you feel comfortable before we leave.",
+    a: "It depends on how many devices you have and how many questions you have — we don't rush. We stay until you feel comfortable and confident using it. Most solo visits wrap up in under an hour, but we're not watching the clock.",
   },
   {
     q: 'Is this a subscription? Will I owe monthly fees?',
