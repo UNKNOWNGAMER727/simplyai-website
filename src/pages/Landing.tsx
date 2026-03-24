@@ -1,6 +1,18 @@
-import { motion, useInView, useScroll } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  useReducedMotion,
+  useInView,
+  motionValue,
+} from 'framer-motion';
 import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+
+// Placeholder to suppress unused import warnings for Task 2+ animations
+void [AnimatePresence, useTransform, useMotionValueEvent, motionValue];
 
 // Scroll-triggered fade variant
 function useReveal() {
@@ -19,11 +31,22 @@ function RevealDiv({
   className?: string;
 }) {
   const { ref, isInView } = useReveal();
+  const shouldReduceMotion = useReducedMotion();
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 24 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      initial={
+        shouldReduceMotion
+          ? { opacity: 0 }
+          : { opacity: 0, y: 24, filter: 'blur(8px)', scale: 0.97 }
+      }
+      animate={
+        isInView
+          ? shouldReduceMotion
+            ? { opacity: 1 }
+            : { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 }
+          : {}
+      }
       transition={{ duration: 0.65, delay, ease: [0.25, 0.1, 0.25, 1] }}
       className={className}
     >
