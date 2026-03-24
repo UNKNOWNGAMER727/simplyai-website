@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, PhoneMissed, ChevronDown, ChevronUp, Clock, UserPlus,
   Link2, CheckCircle2, AlertCircle, Send, RefreshCw, Loader2,
+  MessageSquare,
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import ActionButton from '../ui/ActionButton';
@@ -177,19 +178,30 @@ function CallRow({ call }: { call: Call }) {
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pt-0 border-t border-white/5 space-y-3">
-              <div className="mt-3">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Summary</p>
-                <p className="text-sm text-gray-300">{call.summary}</p>
-              </div>
+              {call.summary && (
+                <div className="mt-3">
+                  <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 font-semibold">Summary</p>
+                  <p className="text-sm text-gray-300 leading-relaxed">{call.summary}</p>
+                </div>
+              )}
 
               {call.transcript && (
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Transcript</p>
-                  <div className="bg-[#111] rounded-lg p-3 max-h-48 overflow-y-auto">
-                    {call.transcript.split('\n').map((line, i) => {
-                      const isCaller = line.startsWith('Caller:');
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <MessageSquare size={11} className="text-gray-600" />
+                    <p className="text-[10px] text-gray-600 uppercase tracking-widest font-semibold">Transcript</p>
+                  </div>
+                  <div className="bg-[#111] rounded-xl border border-white/5 p-3 max-h-48 overflow-y-auto space-y-1">
+                    {call.transcript.split('\n').filter(Boolean).map((line, i) => {
+                      const isCaller = line.startsWith('Caller:') || line.startsWith('User:');
+                      const isAgent  = line.startsWith('Agent:')  || line.startsWith('Simi:') || line.startsWith('Assistant:');
                       return (
-                        <p key={i} className={`text-xs leading-relaxed ${isCaller ? 'text-[#0071e3]' : 'text-gray-400'}`}>
+                        <p
+                          key={i}
+                          className={`text-xs leading-relaxed ${
+                            isCaller ? 'text-[#0071e3]' : isAgent ? 'text-[#34c759]' : 'text-gray-400'
+                          }`}
+                        >
                           {line}
                         </p>
                       );
@@ -245,18 +257,43 @@ function CallRow({ call }: { call: Call }) {
   );
 }
 
+function formatLastRefreshed(date: Date | null): string {
+  if (!date) return '';
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+}
+
 export function Calls() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [allCalls, setAllCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const { toast } = useToast();
 
   const loadCalls = useCallback(async () => {
     try {
       const res = await fetch('/webhook-api/calls');
       if (res.ok) {
-        const data = await res.json();
-        setAllCalls(data);
+        const raw = await res.json();
+        // Map ElevenLabs webhook format → CRM Call type
+        const mapped: Call[] = (raw as Record<string, unknown>[]).map((c) => {
+          const secs = (c.durationSecs as number) ?? 0;
+          const mins = Math.floor(secs / 60);
+          const sec = secs % 60;
+          return {
+            id: c.id as string,
+            callerName: (c.contactName as string | null) ?? null,
+            callerPhone: (c.contactPhone as string) ?? 'Unknown',
+            date: (c.startTime as string) ?? (c.receivedAt as string),
+            duration: secs === 0 ? '0:00' : `${mins}:${String(sec).padStart(2, '0')}`,
+            summary: (c.summary as string) ?? '',
+            transcript: (c.transcript as string | null) ?? null,
+            didBook: false,
+            followUpStatus: 'none',
+            leadId: null,
+          };
+        });
+        setAllCalls(mapped);
+        setLastRefreshed(new Date());
       }
     } catch {
       // webhook server might not be running
@@ -277,38 +314,68 @@ export function Calls() {
   const answeredCount = allCalls.filter(c => !isMissed(c)).length;
   const bookedCount = allCalls.filter(c => c.didBook).length;
   const missedCount = allCalls.filter(c => isMissed(c)).length;
+  const needsFollowUp = allCalls.filter(c => !isMissed(c) && !c.didBook && c.followUpStatus === 'none').length;
+
+  const stats = [
+    { label: 'Total', value: totalCalls, color: '#0071e3', gradient: 'rgba(0,113,227,0.10)' },
+    { label: 'Answered', value: answeredCount, color: '#34c759', gradient: 'rgba(52,199,89,0.10)' },
+    { label: 'Booked', value: bookedCount, color: '#bf5af2', gradient: 'rgba(191,90,242,0.10)' },
+    { label: 'Missed', value: missedCount, color: '#ff453a', gradient: 'rgba(255,69,58,0.10)' },
+  ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">SkipCalls Log</h2>
+        <div>
+          <h2 className="text-xl font-bold text-white">Simi Call Log</h2>
+          {lastRefreshed && (
+            <p className="text-xs text-gray-600 mt-0.5">
+              Last refreshed: {formatLastRefreshed(lastRefreshed)}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {totalCalls > 0 && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#34c759] font-medium">Live</span>
+            <span className="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#34c759]/12 text-[#34c759] font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />
+              Live
+            </span>
           )}
-          <button onClick={() => { loadCalls(); toast('Refreshing calls...'); }} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+          {needsFollowUp > 0 && (
+            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#ff9f0a]/12 text-[#ff9f0a] font-medium">
+              <AlertCircle size={9} />
+              {needsFollowUp} need follow-up
+            </span>
+          )}
+          <button
+            onClick={() => { loadCalls(); toast('Refreshing calls...'); }}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            aria-label="Refresh calls"
+          >
             {loading ? <Loader2 size={14} className="text-gray-400 animate-spin" /> : <RefreshCw size={14} className="text-gray-400" />}
           </button>
         </div>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Total', value: totalCalls, color: '#0071e3' },
-          { label: 'Answered', value: answeredCount, color: '#34c759' },
-          { label: 'Booked', value: bookedCount, color: '#bf5af2' },
-          { label: 'Missed', value: missedCount, color: '#ff453a' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-[#1a1a1a] rounded-xl border border-white/10 p-3">
-            <p className="text-xs text-gray-500">{stat.label}</p>
-            <p className="text-2xl font-bold mt-0.5" style={{ color: stat.color }}>
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-xl border border-white/6 p-4"
+            style={{ background: `linear-gradient(135deg, ${stat.gradient} 0%, rgba(26,26,26,0.8) 100%)` }}
+          >
+            <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
+            <p className="text-2xl font-bold mt-1" style={{ color: stat.color }}>
               {totalCalls === 0 ? '\u2014' : stat.value}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2">
+      {/* Filters */}
+      <div className="flex gap-2 flex-wrap">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -324,6 +391,7 @@ export function Calls() {
         ))}
       </div>
 
+      {/* Call list */}
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filtered.map((call) => (

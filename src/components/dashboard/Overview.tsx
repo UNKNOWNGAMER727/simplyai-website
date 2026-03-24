@@ -9,8 +9,11 @@ import {
   Phone,
   DollarSign,
   UserPlus,
+  Bot,
+  CheckCircle2,
+  ListTodo,
 } from 'lucide-react';
-import { bookings as mockBookings, activityFeed as mockActivity } from '../../data/mockData';
+import { activityFeed as mockActivity } from '../../data/mockData';
 import { useToast } from '../ui/Toast';
 import { SmartAssistList } from '../ui/SmartAssist';
 import ActionButton from '../ui/ActionButton';
@@ -31,23 +34,43 @@ interface ActivityItem {
 }
 
 const typeColors: Record<ActivityItem['type'], string> = {
-  task: '#0071e3',
-  agent: '#bf5af2',
-  booking: '#0071e3',
-  call: '#ff9f0a',
-  review: '#34c759',
-  payment: '#34c759',
-  lead: '#ff375f',
+  task:    '#0071e3',
+  agent:   '#bf5af2',
+  booking: '#34c759',
+  call:    '#ff9f0a',
+  review:  '#34c759',
+  payment: '#30d158',
+  lead:    '#ff375f',
+};
+
+const typeBgColors: Record<ActivityItem['type'], string> = {
+  task:    'rgba(0,113,227,0.12)',
+  agent:   'rgba(191,90,242,0.12)',
+  booking: 'rgba(52,199,89,0.12)',
+  call:    'rgba(255,159,10,0.12)',
+  review:  'rgba(52,199,89,0.12)',
+  payment: 'rgba(48,209,88,0.12)',
+  lead:    'rgba(255,55,95,0.12)',
 };
 
 const typeIcons: Record<ActivityItem['type'], typeof Zap> = {
-  task: Zap,
-  agent: Zap,
+  task:    ListTodo,
+  agent:   Bot,
   booking: CalendarDays,
-  call: Phone,
-  review: Star,
+  call:    Phone,
+  review:  Star,
   payment: DollarSign,
-  lead: UserPlus,
+  lead:    UserPlus,
+};
+
+const typeLabels: Record<ActivityItem['type'], string> = {
+  task:    'Task',
+  agent:   'Agent',
+  booking: 'Booking',
+  call:    'Call',
+  review:  'Review',
+  payment: 'Payment',
+  lead:    'Lead',
 };
 
 function formatTime(iso: string): string {
@@ -133,9 +156,9 @@ export function Overview() {
         catch { hiddenIds = new Set<string>(); }
 
         const todayOnly = converted.filter((b) => b.date === today && !hiddenIds.has(String(b.id)));
-        setTodayBookings(todayOnly.length > 0 ? todayOnly : mockBookings.filter((b) => b.date === '2026-03-20'));
+        setTodayBookings(todayOnly);
       } catch {
-        setTodayBookings(mockBookings.filter((b) => b.date === '2026-03-20'));
+        // Cal.com unavailable — leave empty
       }
     } catch {
       // Paperclip offline — show mock activity
@@ -159,10 +182,34 @@ export function Overview() {
   const doneTasks = issues.filter((t) => t.status === 'done').length;
 
   const metricCards = [
-    { label: 'Agents Online', value: agents.length > 0 ? activeAgents : 5, color: '#0071e3' },
-    { label: 'Total Tasks', value: totalTasks || 19, color: '#ff9f0a' },
-    { label: 'Completed', value: doneTasks || 12, color: '#34c759' },
-    { label: 'Today\'s Bookings', value: todayBookings.length, color: '#bf5af2' },
+    {
+      label: 'Agents Online',
+      value: agents.length > 0 ? activeAgents : 5,
+      color: '#0071e3',
+      gradient: 'linear-gradient(135deg, rgba(0,113,227,0.15) 0%, rgba(0,113,227,0.04) 100%)',
+      icon: Bot,
+    },
+    {
+      label: 'Total Tasks',
+      value: totalTasks || 19,
+      color: '#ff9f0a',
+      gradient: 'linear-gradient(135deg, rgba(255,159,10,0.15) 0%, rgba(255,159,10,0.04) 100%)',
+      icon: ListTodo,
+    },
+    {
+      label: 'Completed',
+      value: doneTasks || 12,
+      color: '#34c759',
+      gradient: 'linear-gradient(135deg, rgba(52,199,89,0.15) 0%, rgba(52,199,89,0.04) 100%)',
+      icon: CheckCircle2,
+    },
+    {
+      label: "Today's Bookings",
+      value: todayBookings.length,
+      color: '#bf5af2',
+      gradient: 'linear-gradient(135deg, rgba(191,90,242,0.15) 0%, rgba(191,90,242,0.04) 100%)',
+      icon: CalendarDays,
+    },
   ];
 
   // ── Smart Assists ──────────────────────────────────────────────────────
@@ -236,7 +283,7 @@ export function Overview() {
         case 'schedule-day': {
           await createIssue({
             title: 'Plan today\'s schedule and brief Kyle',
-            description: `Compile today's schedule: check Cal.com for bookings, check SkipCalls for any overnight calls/leads, check agent statuses, and send Kyle a morning briefing via Telegram. Include: upcoming appointments, pending leads needing follow-up, any blockers.`,
+            description: `Compile today's schedule: check Cal.com for bookings, check ElevenLabs (Simi) call log for any overnight calls/leads, check agent statuses, and send Kyle a morning briefing via Telegram. Include: upcoming appointments, pending leads needing follow-up, any blockers.`,
             priority: 'high',
             assigneeAgentId: AGENT_IDS.operationsManager,
           });
@@ -282,7 +329,7 @@ export function Overview() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Smart Assists */}
       {!loading && smartAssists.length > 0 && (
         <SmartAssistList assists={smartAssists} />
@@ -328,24 +375,49 @@ export function Overview() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {metricCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-2xl px-5 py-6 text-center bg-[#1a1a1a]"
-            style={{ boxShadow: `0 0 30px ${card.color}10` }}
-          >
-            <p className="text-4xl font-bold" style={{ color: card.color }}>
-              {loading ? '—' : card.value}
-            </p>
-            <p className="mt-1 text-sm text-neutral-400">{card.label}</p>
-          </div>
-        ))}
+        {metricCards.map((card) => {
+          const CardIcon = card.icon;
+          return (
+            <div
+              key={card.label}
+              className="rounded-xl border border-white/6 px-5 py-5 relative overflow-hidden"
+              style={{ background: card.gradient }}
+            >
+              {/* Background icon watermark */}
+              <CardIcon
+                size={52}
+                className="absolute -bottom-2 -right-2 opacity-[0.07]"
+                style={{ color: card.color }}
+              />
+              <div className="flex items-start justify-between mb-2">
+                <span
+                  className="flex items-center justify-center w-8 h-8 rounded-lg"
+                  style={{ backgroundColor: `${card.color}22` }}
+                >
+                  <CardIcon size={15} style={{ color: card.color }} />
+                </span>
+              </div>
+              <p className="text-3xl font-bold tracking-tight" style={{ color: card.color }}>
+                {loading ? '—' : card.value}
+              </p>
+              <p className="mt-1 text-xs text-neutral-400 font-medium">{card.label}</p>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Today's Agenda */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-white">Today's Agenda</h2>
+        <div
+          className="rounded-xl border border-white/6 overflow-hidden"
+          style={{ background: '#1a1a1a' }}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+            <h2 className="text-sm font-semibold text-white">Today's Agenda</h2>
+            <span className="text-xs text-neutral-500">
+              {todayBookings.length} appointment{todayBookings.length !== 1 ? 's' : ''}
+            </span>
+          </div>
           {todayBookings.length === 0 && !loading ? (
             <EmptyState
               icon={CalendarDays}
@@ -353,24 +425,29 @@ export function Overview() {
               description="When customers book at cal.com/simplytech.ai, their appointments will show up here."
             />
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-white/[0.04]">
               {todayBookings.map((b) => (
                 <div
                   key={b.id}
-                  className="flex items-center justify-between rounded-xl px-5 py-4 bg-[#1a1a1a]"
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.025] transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-[#0071e3]">{b.time}</span>
+                    <span
+                      className="text-xs font-mono font-semibold shrink-0"
+                      style={{ color: '#0071e3' }}
+                    >
+                      {b.time}
+                    </span>
                     <div>
-                      <p className="font-medium text-white">{b.clientName}</p>
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-sm font-medium text-white">{b.clientName}</p>
+                      <p className="text-xs text-neutral-500 mt-0.5">
                         {b.tier.charAt(0).toUpperCase() + b.tier.slice(1)} &middot;{' '}
                         {b.location === 'in-person' ? b.address : 'Remote'}
                       </p>
                     </div>
                   </div>
                   <span
-                    className="rounded-full px-3 py-1 text-xs font-medium"
+                    className="rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0"
                     style={{
                       backgroundColor: b.status === 'confirmed' ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)',
                       color: b.status === 'confirmed' ? '#34c759' : '#ff9f0a',
@@ -385,37 +462,58 @@ export function Overview() {
         </div>
 
         {/* Activity Feed */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Activity Feed</h2>
+        <div
+          className="rounded-xl border border-white/6 overflow-hidden"
+          style={{ background: '#1a1a1a' }}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+            <h2 className="text-sm font-semibold text-white">Activity Feed</h2>
             {agents.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#34c759] font-medium">Live</span>
-                <button onClick={loadData} className="p-1 rounded hover:bg-white/10 transition-colors">
-                  <RefreshCw size={12} className="text-gray-500" />
+                <span className="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#34c759]/12 text-[#34c759] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />
+                  Live
+                </span>
+                <button
+                  onClick={loadData}
+                  className="p-1.5 rounded-lg hover:bg-white/8 transition-colors"
+                  aria-label="Refresh activity"
+                >
+                  <RefreshCw size={12} className="text-gray-500 hover:text-gray-300 transition-colors" />
                 </button>
               </div>
             )}
           </div>
-          <div className="space-y-2">
+          <div className="divide-y divide-white/[0.04]">
             {activity.map((event) => {
               const IconComponent = typeIcons[event.type] ?? Zap;
               return (
                 <div
                   key={event.id}
-                  className="flex items-start gap-3 rounded-xl px-4 py-3 bg-[#1a1a1a]"
+                  className="flex items-start gap-3 px-5 py-3 hover:bg-white/[0.025] transition-colors"
                 >
                   <span
-                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full"
-                    style={{ backgroundColor: `${typeColors[event.type]}20` }}
+                    className="mt-0.5 flex w-6 h-6 shrink-0 items-center justify-center rounded-md"
+                    style={{ backgroundColor: typeBgColors[event.type] }}
                   >
                     <IconComponent size={12} style={{ color: typeColors[event.type] }} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white">{event.title}</p>
-                    <p className="text-xs text-neutral-500">{event.description}</p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span
+                        className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                        style={{
+                          backgroundColor: typeBgColors[event.type],
+                          color: typeColors[event.type],
+                        }}
+                      >
+                        {typeLabels[event.type]}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white leading-snug">{event.title}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{event.description}</p>
                   </div>
-                  <span className="shrink-0 text-xs text-neutral-600">
+                  <span className="shrink-0 text-[10px] text-neutral-600 mt-0.5">
                     {formatTime(event.timestamp)}
                   </span>
                 </div>

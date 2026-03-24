@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SimplyAI — Agent HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--floor:#0c0c16;--wall:#141420;
+  --desk:#1a1a2e;--text:#e0e0e0;--muted:#555;
+  --blue:#0071e3;--purple:#bf5af2;--green:#34c759;--orange:#ff9f0a;--red:#ff375f;
+}
+body{background:var(--bg);color:var(--text);font-family:'Press Start 2P',monospace;height:100vh;overflow:hidden;user-select:none}
+
+/* HEADER */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(10,10,10,.96);border-bottom:1px solid #1e1e1e;
+  padding:10px 20px;display:flex;align-items:center;gap:14px;
+  backdrop-filter:blur(8px);
+}
+.wordmark{font-size:11px;color:#fff;letter-spacing:-1px}
+.wordmark em{color:var(--blue);font-style:normal}
+.htag{font-size:7px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.blink-dot{width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:auto;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* SCENE */
+.scene{
+  position:fixed;top:48px;left:0;right:0;bottom:0;
+  background:var(--floor);overflow:hidden;
+}
+.scene::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:28px 28px;pointer-events:none;
+}
+
+/* CLAUDE HQ */
+.claude-hq{
+  position:absolute;left:50%;top:8%;transform:translateX(-50%);
+  text-align:center;z-index:5;
+}
+.hq-label{font-size:5px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+.claude-sprite{width:48px;height:48px;margin:0 auto 6px;position:relative;image-rendering:pixelated}
+.claude-name{font-size:6px;color:var(--blue);margin-top:4px}
+/* Claude body via CSS */
+.claude-sprite canvas{display:block}
+
+/* DESKS */
+.desk{
+  position:absolute;width:110px;height:64px;
+  background:#12122a;border:2px solid #2a2a44;border-radius:3px;
+  image-rendering:pixelated;transition:box-shadow .4s;
+}
+.desk-label{
+  position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+  font-size:5px;color:var(--muted);white-space:nowrap;letter-spacing:1px;
+}
+.desk .monitor{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  width:56px;height:34px;background:#0a0a1a;border:2px solid #2a2a44;border-radius:2px;
+  transition:box-shadow .4s,background .4s;
+}
+.desk .keyboard{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:44px;height:10px;background:#1a1a2e;border:1px solid #2a2a40;border-radius:1px;
+}
+.desk.active .monitor{background:#001833;box-shadow:0 0 10px var(--blue),0 0 24px rgba(0,113,227,.25)}
+.desk.active-purple .monitor{background:#1a0033;box-shadow:0 0 10px var(--purple),0 0 24px rgba(191,90,242,.25)}
+
+/* CHARACTERS */
+.char{
+  position:absolute;width:24px;cursor:pointer;z-index:10;
+  transition:left .55s cubic-bezier(.4,0,.2,1), top .55s cubic-bezier(.4,0,.2,1);
+}
+.char:hover{filter:brightness(1.3)}
+.char canvas{display:block;image-rendering:pixelated}
+.char.walking canvas{animation:walk-bob .28s steps(2) infinite}
+.char.working canvas{animation:work-tap .35s steps(2) infinite}
+.char.done canvas{animation:celebrate .5s steps(3) infinite}
+@keyframes walk-bob{0%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes work-tap{0%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(.94) translateY(1px)}}
+@keyframes celebrate{0%{transform:translateY(0) rotate(0deg)}33%{transform:translateY(-5px) rotate(-8deg)}66%{transform:translateY(-5px) rotate(8deg)}100%{transform:translateY(0)}}
+
+/* BUBBLE */
+.bubble{
+  position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:#0e0e1e;border:1px solid #2a2a44;border-radius:3px;
+  padding:4px 6px;font-size:5px;color:#aaa;
+  white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .25s;pointer-events:none;
+}
+.bubble.show{opacity:1}
+.bubble::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:#2a2a44;
+}
+
+/* WALKWAY */
+.walkway{
+  position:absolute;left:0;right:0;
+  background:rgba(255,255,255,.015);border-top:1px solid #1a1a2a;border-bottom:1px solid #1a1a2a;
+}
+
+/* PANEL */
+.panel{
+  position:fixed;right:0;top:48px;bottom:0;width:320px;
+  background:rgba(8,8,14,.98);border-left:1px solid #1e1e1e;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  z-index:200;display:flex;flex-direction:column;
+}
+.panel.open{transform:translateX(0)}
+.ph{padding:13px 16px;border-bottom:1px solid #1e1e1e;background:#0c0c14;flex-shrink:0;display:flex;align-items:flex-start;gap:10px}
+.ph-info{flex:1}
+.ph-name{font-size:9px;color:#fff}
+.ph-role{font-size:6.5px;color:var(--muted);margin-top:3px}
+.ph-close{font-size:11px;color:var(--muted);cursor:pointer;padding:4px 8px;border:1px solid #2a2a2a;border-radius:3px;background:none;font-family:inherit;flex-shrink:0}
+.ph-close:hover{color:#fff;border-color:#555}
+.ptask{padding:7px 16px;font-size:6px;color:var(--muted);border-bottom:1px solid #1e1e1e;background:#090910;flex-shrink:0;line-height:1.9}
+.pstatus-row{padding:7px 16px;font-size:7px;border-bottom:1px solid #1e1e1e;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.feed{flex:1;overflow-y:auto;padding:6px 10px;display:flex;flex-direction:column;gap:2px}
+.feed::-webkit-scrollbar{width:3px}
+.feed::-webkit-scrollbar-thumb{background:#1e1e1e;border-radius:2px}
+.ev{display:flex;align-items:flex-start;gap:6px;padding:4px 6px;border-radius:4px;font-size:6.5px;line-height:1.8}
+.ev:hover{background:#0e0e18}
+.ev-icon{flex-shrink:0;font-size:11px}
+.ev-body{flex:1;overflow:hidden}
+.ev-tool-name{font-weight:700;margin-right:4px;font-size:7px}
+.ev-detail{color:var(--muted);word-break:break-all;font-size:6px}
+.ev-thought{color:#505060;font-style:italic;font-size:6px}
+.ev-error{color:var(--red);font-size:6px}
+.ev-ts{color:#252530;font-size:5.5px;flex-shrink:0;margin-top:2px}
+
+/* PROGRESS */
+.prog{position:fixed;bottom:0;left:0;right:0;height:2px;background:#0e0e1e;z-index:50}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));width:0;animation:psweep 2s linear infinite}
+@keyframes psweep{from{width:0}to{width:100%}}
+
+/* HINT */
+.hint{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);font-size:6px;color:#333;letter-spacing:1px;animation:hfade 5s ease forwards;pointer-events:none;z-index:60}
+@keyframes hfade{0%{opacity:1}60%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="wordmark">Simply<em>AI</em></div>
+  <div class="htag">Agent HQ</div>
+  <div class="blink-dot" id="liveDot"></div>
+</div>
+
+<div class="scene" id="scene">
+  <div class="claude-hq" id="claudeHQ">
+    <div class="hq-label">— Claude HQ —</div>
+    <canvas id="claudeCanvas" width="40" height="40" style="display:block;margin:0 auto 4px;image-rendering:pixelated;width:40px;height:40px"></canvas>
+    <div class="claude-name">Claude</div>
+  </div>
+</div>
+
+<div class="panel" id="panel">
+  <div class="ph">
+    <div class="ph-info">
+      <div class="ph-name" id="pName">—</div>
+      <div class="ph-role" id="pRole">—</div>
+    </div>
+    <button class="ph-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="ptask" id="pTask">—</div>
+  <div class="pstatus-row"><div class="sdot" id="pDot"></div><span id="pStatus">—</span></div>
+  <div class="feed" id="pFeed"></div>
+</div>
+
+<div class="hint">▶ CLICK A CHARACTER TO INSPECT</div>
+<div class="prog"><div class="prog-fill" id="progFill"></div></div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+const CFG = [
+  { id:'landing', name:'Landing', role:'Frontend Dev', color:'#0071e3', headColor:'#5ab4ff',
+    task:'Mobile responsiveness, hamburger nav, testimonials, trust badges, scroll animations',
+    deskPct:{x:20, y:72} },
+  { id:'crm',     name:'CRM Dev', role:'Dashboard Dev', color:'#bf5af2', headColor:'#d494ff',
+    task:'Sidebar nav, Overview polish, Calls tab, live data indicators, consistent cards',
+    deskPct:{x:74, y:72} },
+];
+
+const STATUS_COLOR = {waiting:'#444',running:'#34c759',done:'#0071e3',error:'#ff375f'};
+const STATUS_LABEL = {waiting:'Waiting…',running:'Working…',done:'Done ✓',error:'Error!'};
+const TOOL_ICON    = {Edit:'✏️',Write:'📝',Read:'📖',Bash:'⚡',Grep:'🔍',Glob:'📂',Agent:'🤖',ToolSearch:'🔧',TaskCreate:'📋',TaskUpdate:'📋'};
+const TOOL_COLOR2  = {Edit:'#34c759',Write:'#34c759',Read:'#ff9f0a',Bash:'#0071e3',Grep:'#bf5af2',Glob:'#bf5af2',Agent:'#ff375f'};
+
+// ── Pixel drawing helpers ──────────────────────────────────────────────────
+const P = 3; // pixels per "dot"
+
+function drawGrid(ctx, grid, palette) {
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      const v = grid[r][c];
+      if (!v) continue;
+      ctx.fillStyle = palette[v - 1];
+      ctx.fillRect(c * P, r * P, P, P);
+    }
+  }
+}
+
+// 8×12 person sprite
+const PERSON_GRID = [
+  [0,0,1,1,1,1,0,0],
+  [0,0,1,1,1,1,0,0],
+  [0,0,1,1,1,1,0,0],
+  [0,1,1,2,2,1,1,0],
+  [0,0,1,2,2,1,0,0],
+  [0,0,1,2,2,1,0,0],
+  [0,0,1,2,2,1,0,0],
+  [0,1,1,0,0,1,1,0],
+  [0,1,1,0,0,1,1,0],
+  [0,1,1,0,0,1,1,0],
+  [1,1,0,0,0,0,1,1],
+  [1,1,0,0,0,0,1,1],
+];
+
+// Claude (robot) 10×12
+const CLAUDE_GRID = [
+  [0,0,3,3,3,3,3,3,0,0],
+  [0,3,3,3,3,3,3,3,3,0],
+  [0,3,0,3,3,3,0,3,3,0],
+  [0,3,3,3,3,3,3,3,3,0],
+  [0,0,3,3,3,3,3,3,0,0],
+  [0,3,2,2,3,3,2,2,3,0],
+  [0,3,2,2,3,3,2,2,3,0],
+  [0,3,3,3,3,3,3,3,3,0],
+  [0,3,3,3,3,3,3,3,3,0],
+  [0,0,3,3,0,0,3,3,0,0],
+  [0,0,3,3,0,0,3,3,0,0],
+  [0,0,3,3,0,0,3,3,0,0],
+];
+
+function makeCharCanvas(headColor, bodyColor, w, h) {
+  const cvs = document.createElement('canvas');
+  cvs.width = w; cvs.height = h;
+  cvs.style.width = w + 'px'; cvs.style.height = h + 'px';
+  cvs.style.imageRendering = 'pixelated';
+  drawGrid(cvs.getContext('2d'), PERSON_GRID, [headColor, bodyColor]);
+  return cvs;
+}
+
+// Draw Claude
+(function() {
+  const cvs = document.getElementById('claudeCanvas');
+  const W = 10 * P, H = 12 * P;
+  cvs.width = W; cvs.height = H;
+  cvs.style.width = W + 'px'; cvs.style.height = H + 'px';
+  drawGrid(cvs.getContext('2d'), CLAUDE_GRID, ['#4fa3ff','#1060c0','#0a0a0a','#0071e3','#888']);
+})();
+
+// ── Scene setup ──────────────────────────────────────────────────────────────
+const scene  = document.getElementById('scene');
+const charEls = {}, deskEls = {}, bubbleEls = {};
+
+// Walkway
+const walkway = document.createElement('div');
+walkway.className = 'walkway';
+walkway.style.top = '50%'; walkway.style.height = '36px';
+scene.appendChild(walkway);
+
+for (const cfg of CFG) {
+  // Desk
+  const desk = document.createElement('div');
+  desk.className = 'desk';
+  desk.id = 'desk-' + cfg.id;
+  desk.innerHTML = '<div class="monitor"></div><div class="keyboard"></div><div class="desk-label">' + cfg.name + ' Desk</div>';
+  desk.style.left = cfg.deskPct.x + '%';
+  desk.style.top  = cfg.deskPct.y + '%';
+  desk.style.transform = 'translate(-50%, -50%)';
+  desk.style.borderColor = cfg.color + '55';
+  scene.appendChild(desk);
+  deskEls[cfg.id] = desk;
+
+  // Character
+  const charWrap = document.createElement('div');
+  charWrap.className = 'char';
+  charWrap.id = 'char-' + cfg.id;
+  const cvs = makeCharCanvas(cfg.headColor, cfg.color, 8 * P, 12 * P);
+  charWrap.appendChild(cvs);
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.id = 'bub-' + cfg.id;
+  charWrap.appendChild(bub);
+  charWrap.style.left = cfg.deskPct.x + '%';
+  charWrap.style.top  = (cfg.deskPct.y - 14) + '%';
+  charWrap.onclick = () => openPanel(cfg.id);
+  scene.appendChild(charWrap);
+  charEls[cfg.id]  = charWrap;
+  bubbleEls[cfg.id] = bub;
+}
+
+// ── Positions ────────────────────────────────────────────────────────────────
+const POS = {};
+function computePos() {
+  const W = scene.offsetWidth, H = scene.offsetHeight;
+  const HQEl = document.getElementById('claudeHQ');
+  const hqCX = HQEl.offsetLeft + HQEl.offsetWidth / 2;
+  const hqBY = HQEl.offsetTop  + HQEl.offsetHeight + 8;
+  for (const cfg of CFG) {
+    const deskX = W * cfg.deskPct.x / 100;
+    const deskY = H * cfg.deskPct.y / 100;
+    POS[cfg.id] = {
+      desk:    { left: deskX,                        top: deskY - H * 0.14 },
+      mid:     { left: deskX,                        top: H * 0.50 },
+      hq:      { left: hqCX + (cfg.id === 'landing' ? -42 : 16), top: hqBY },
+    };
+  }
+}
+computePos();
+window.addEventListener('resize', computePos);
+
+function moveTo(id, pos, cls) {
+  const el = charEls[id];
+  el.style.left = pos.left + 'px';
+  el.style.top  = pos.top  + 'px';
+  el.className  = 'char ' + cls;
+}
+
+// ── Agent state ───────────────────────────────────────────────────────────────
+const agentState = {};
+for (const cfg of CFG) agentState[cfg.id] = { status: 'waiting', events: [], prevStatus: null };
+
+function applyState(cfg, data) {
+  const st  = agentState[cfg.id];
+  const prev = st.status;
+  st.prevStatus = prev;
+  st.status  = data.status;
+  st.events  = data.events || [];
+  const bub  = bubbleEls[cfg.id];
+  const desk = deskEls[cfg.id];
+  const deskClass = cfg.id === 'crm' ? 'desk active-purple' : 'desk active';
+
+  if (data.status === 'waiting') {
+    moveTo(cfg.id, POS[cfg.id].desk, 'idle');
+    desk.className = 'desk';
+    bub.className = 'bubble';
+    return;
+  }
+  if (data.status === 'running') {
+    desk.className = deskClass;
+    const tool = data.currentTool;
+    let msg = tool ? ((TOOL_ICON[tool] || '⚙️') + ' ' + tool.toLowerCase() + '…') : 'thinking…';
+    if (data.currentText && data.currentText.length > 3) msg = data.currentText.slice(0, 42) + '…';
+    bub.textContent = msg;
+    bub.className = 'bubble show';
+    moveTo(cfg.id, POS[cfg.id].desk, 'working');
+    return;
+  }
+  if (data.status === 'done') {
+    desk.className = 'desk';
+    bub.className = 'bubble show';
+    if (prev !== 'done') {
+      // Walk sequence: desk → mid → hq
+      bub.textContent = '✅ Heading to Claude…';
+      moveTo(cfg.id, POS[cfg.id].mid, 'walking');
+      setTimeout(() => {
+        moveTo(cfg.id, POS[cfg.id].hq, 'walking');
+        setTimeout(() => {
+          moveTo(cfg.id, POS[cfg.id].hq, 'done');
+          bub.textContent = '🎉 Work complete!';
+        }, 650);
+      }, 450);
+    } else {
+      moveTo(cfg.id, POS[cfg.id].hq, 'done');
+      bub.textContent = '🎉 Work complete!';
+    }
+    return;
+  }
+  if (data.status === 'error') {
+    desk.className = 'desk';
+    bub.textContent = '❌ Hit an error';
+    bub.className = 'bubble show';
+    moveTo(cfg.id, POS[cfg.id].desk, 'idle');
+  }
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+let openId = null;
+
+function openPanel(id) {
+  openId = id;
+  const cfg = CFG.find(c => c.id === id);
+  const st  = agentState[id];
+  document.getElementById('pName').textContent = cfg.name;
+  document.getElementById('pRole').textContent = cfg.role;
+  document.getElementById('pTask').textContent = cfg.task;
+  const sc = STATUS_COLOR[st.status] || '#444';
+  document.getElementById('pDot').style.background = sc;
+  document.getElementById('pStatus').textContent = STATUS_LABEL[st.status] || st.status;
+  document.getElementById('pStatus').style.color  = sc;
+  renderFeed(st.events);
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  openId = null;
+}
+
+function renderFeed(events) {
+  const feed = document.getElementById('pFeed');
+  if (!events || !events.length) {
+    feed.innerHTML = '<div style="color:#333;font-size:6.5px;padding:20px;text-align:center;font-style:italic">No activity yet…</div>';
+    return;
+  }
+  feed.innerHTML = events.map(ev => {
+    if (ev.kind === 'tool') {
+      const icon  = TOOL_ICON[ev.tool]  || '⚙️';
+      const color = TOOL_COLOR2[ev.tool] || '#888';
+      return '<div class="ev">'
+        + '<span class="ev-icon">' + icon + '</span>'
+        + '<div class="ev-body">'
+        + '<span class="ev-tool-name" style="color:' + color + '">' + ev.tool + '</span>'
+        + (ev.detail ? '<span class="ev-detail">' + esc(ev.detail) + '</span>' : '')
+        + '</div>'
+        + '<span class="ev-ts">' + fmtTs(ev.ts) + '</span>'
+        + '</div>';
+    }
+    if (ev.kind === 'thought') {
+      return '<div class="ev">'
+        + '<span class="ev-icon">💬</span>'
+        + '<div class="ev-body ev-thought">' + esc(ev.text) + '</div>'
+        + '<span class="ev-ts">' + fmtTs(ev.ts) + '</span>'
+        + '</div>';
+    }
+    if (ev.kind === 'error') {
+      return '<div class="ev">'
+        + '<span class="ev-icon">❌</span>'
+        + '<div class="ev-body ev-error">' + esc(ev.text) + '</div>'
+        + '<span class="ev-ts">' + fmtTs(ev.ts) + '</span>'
+        + '</div>';
+    }
+    return '';
+  }).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTs(ts) {
+  try { return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}); }
+  catch { return ''; }
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+async function refresh() {
+  try {
+    const res  = await fetch('/api/status');
+    const data = await res.json();
+    for (const a of data.agents) {
+      const cfg = CFG.find(c => c.id === a.id);
+      if (cfg) applyState(cfg, a);
+    }
+    if (openId) {
+      const st = agentState[openId];
+      if (st) {
+        const sc = STATUS_COLOR[st.status] || '#444';
+        document.getElementById('pDot').style.background = sc;
+        document.getElementById('pStatus').textContent = STATUS_LABEL[st.status] || st.status;
+        document.getElementById('pStatus').style.color  = sc;
+        renderFeed(st.events);
+      }
+    }
+    const allDone = data.agents.every(a => a.status === 'done');
+    const anyErr  = data.agents.some(a  => a.status === 'error');
+    document.getElementById('liveDot').style.background = anyErr ? '#ff375f' : allDone ? '#0071e3' : '#34c759';
+    if (allDone) {
+      const pf = document.getElementById('progFill');
+      pf.style.animation = 'none'; pf.style.width = '100%'; pf.style.background = '#34c759';
+    }
+  } catch(e) { /* server restarting */ }
+}
+
+computePos();
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

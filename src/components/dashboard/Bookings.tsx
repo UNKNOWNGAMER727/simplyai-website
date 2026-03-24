@@ -158,7 +158,7 @@ function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: st
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-white/[0.02] transition-colors cursor-pointer text-left"
+        className="w-full flex items-center gap-3 p-4 hover:bg-white/[0.03] transition-colors cursor-pointer text-left group"
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">{booking.clientName}</p>
@@ -252,6 +252,7 @@ export function Bookings() {
     catch { return new Set(); }
   });
   const [dataSource, setDataSource] = useState<'loading' | 'live' | 'mock'>('loading');
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const { toast } = useToast();
 
   const persistHidden = (ids: Set<string>) => {
@@ -272,9 +273,11 @@ export function Bookings() {
         setAllBookings(mockBookings);
         setDataSource('mock');
       }
+      setLastRefreshed(new Date());
     } catch {
       setAllBookings(mockBookings);
       setDataSource('mock');
+      setLastRefreshed(new Date());
     }
   }, []);
 
@@ -287,16 +290,24 @@ export function Bookings() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-white">Bookings</h2>
-          {dataSource !== 'loading' && (
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-              dataSource === 'live'
-                ? 'bg-[#34c759]/15 text-[#34c759]'
-                : 'bg-[#ff9f0a]/15 text-[#ff9f0a]'
-            }`}>
-              {dataSource === 'live' ? 'Cal.com Live' : 'Demo Data'}
-            </span>
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">Bookings</h2>
+            {dataSource !== 'loading' && (
+              <span className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                dataSource === 'live'
+                  ? 'bg-[#34c759]/15 text-[#34c759]'
+                  : 'bg-[#ff9f0a]/15 text-[#ff9f0a]'
+              }`}>
+                {dataSource === 'live' && <span className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />}
+                {dataSource === 'live' ? 'Cal.com Live' : 'Demo Data'}
+              </span>
+            )}
+          </div>
+          {lastRefreshed && (
+            <p className="text-xs text-gray-600 mt-0.5">
+              Last refreshed: {lastRefreshed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
+            </p>
           )}
         </div>
 
