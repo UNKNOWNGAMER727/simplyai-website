@@ -111,7 +111,7 @@ const testimonials = [
     location: 'Northridge, CA',
     role: 'Retired teacher',
     quote:
-      "I was so nervous about AI — I thought it was just for young people. The technician was incredibly patient, explained everything in plain English, and now I use Perplexity every single day. Best $300 I've spent in years.",
+      "I was so nervous about AI — I thought it was just for young people. The technician was incredibly patient, explained everything in plain English, and now I use Perplexity every single day. Best $279 I've spent in years.",
     stars: 5,
   },
   {
@@ -119,7 +119,7 @@ const testimonials = [
     location: 'Encino, CA',
     role: 'Small business owner',
     quote:
-      'I run a plumbing company and had zero idea how AI could help me. After the Pro session, I now use it to write estimates, answer customer emails, and research codes. It paid for itself in the first week.',
+      'I run a plumbing company and had zero idea how AI could help me. After the visit, I now use it to write estimates, answer customer emails, and research codes. It paid for itself in the first week.',
     stars: 5,
   },
   {
