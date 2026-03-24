@@ -351,6 +351,19 @@ function HeroHeadline() {
   );
 }
 
+function PricingPulseRing() {
+  const shouldReduceMotion = useReducedMotion();
+  if (shouldReduceMotion) return null;
+  return (
+    <motion.div
+      animate={{ scale: [1, 1.03, 1], opacity: [0.5, 0.8, 0.5] }}
+      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      className="absolute inset-0 rounded-3xl ring-2 ring-[#0071e3]/40 -z-10"
+      aria-hidden="true"
+    />
+  );
+}
+
 export function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -621,13 +634,16 @@ export function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-5">
             {tiers.map((tier, i) => (
               <RevealDiv key={tier.name} delay={i * 0.07}>
-                <div
-                  className={`rounded-3xl p-5 sm:p-7 h-full ${
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className={`relative rounded-3xl p-5 sm:p-7 h-full overflow-visible ${
                     tier.popular
                       ? 'bg-[#1d1d1f] text-white ring-1 ring-[#1d1d1f]'
                       : 'bg-white border border-black/[0.06]'
                   }`}
                 >
+                  {tier.popular && <PricingPulseRing />}
                   {(tier.savings || tier.popular) && (
                     <span className={`text-[10px] font-bold uppercase tracking-widest mb-4 block truncate ${
                       tier.savings ? 'text-[#34c759]' : 'text-[#0071e3]'
@@ -682,7 +698,7 @@ export function Landing() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </RevealDiv>
             ))}
           </div>
