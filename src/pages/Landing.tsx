@@ -1,10 +1,15 @@
 import {
   motion,
+  AnimatePresence,
   useScroll,
+  useTransform,
+  useMotionValueEvent,
   useReducedMotion,
   useInView,
+  motionValue,
+  type MotionValue,
 } from 'framer-motion';
-import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
+import { Check, Phone, Calendar, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 // Scroll-triggered fade variant
@@ -364,6 +369,274 @@ function PricingPulseRing() {
   );
 }
 
+const DEMO_QUERY = "How do I dispute a charge on my bill?";
+const DEMO_BULLETS = [
+  "Call your bank's customer service number",
+  "Explain the charge and request a review",
+  "Ask for a reference number for your case",
+];
+const STEP_LABELS = [
+  { headline: "Open Perplexity on your computer.", sub: "It's already set up and ready." },
+  { headline: "Ask anything.", sub: "How do I dispute a charge on my bill?" },
+  { headline: "Get a real answer.", sub: "With sources. In plain English." },
+  { headline: "Continue on your phone.", sub: "Same Perplexity. Set up on both." },
+];
+
+function LaptopScreen({ typedQuery, bullet1Opacity, bullet2Opacity, bullet3Opacity, glowOpacity }: {
+  typedQuery: string;
+  bullet1Opacity: MotionValue<number>;
+  bullet2Opacity: MotionValue<number>;
+  bullet3Opacity: MotionValue<number>;
+  glowOpacity: MotionValue<number>;
+}) {
+  const showCursor = typedQuery.length > 0 && typedQuery.length < DEMO_QUERY.length;
+  return (
+    <div className="relative w-[340px] sm:w-[420px]">
+      {/* Screen glow */}
+      <motion.div
+        style={{ opacity: glowOpacity }}
+        className="absolute -inset-4 rounded-2xl bg-blue-500/10 blur-xl -z-10"
+        aria-hidden="true"
+      />
+      {/* Lid */}
+      <div className="bg-[#2a2a2a] rounded-t-xl border border-white/10 p-2" style={{ paddingBottom: 0 }}>
+        <div className="bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/10' }}>
+          {/* Screen content */}
+          <div className="h-full flex flex-col p-3 gap-2">
+            {/* Perplexity wordmark */}
+            <div className="text-white/60 text-[10px] font-semibold tracking-wider uppercase">Perplexity</div>
+            {/* Answer area */}
+            <div className="flex-1 overflow-hidden space-y-1.5">
+              {DEMO_BULLETS.map((bullet, i) => {
+                const opacities = [bullet1Opacity, bullet2Opacity, bullet3Opacity];
+                return (
+                  <motion.div
+                    key={i}
+                    style={{ opacity: opacities[i] }}
+                    className="flex items-start gap-1.5"
+                  >
+                    <span className="text-[#0071e3] text-[9px] mt-0.5 shrink-0">•</span>
+                    <span className="text-white/80 text-[9px] leading-tight">{bullet}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
+            {/* Search bar */}
+            <div className="bg-white/10 rounded-lg px-2 py-1.5 text-[9px] text-white/60 font-mono truncate min-h-[24px]">
+              {typedQuery || <span className="opacity-30">Ask anything…</span>}
+              {showCursor && <span className="animate-pulse">|</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Base */}
+      <div className="bg-[#333] h-3 rounded-b-xl border border-t-0 border-white/10" />
+      <div className="bg-[#2a2a2a] h-1.5 w-2/3 mx-auto rounded-b-lg" />
+    </div>
+  );
+}
+
+function PhoneScreen({ phoneOpacity, phoneBulletsOpacity }: {
+  phoneOpacity: MotionValue<number>;
+  phoneBulletsOpacity: MotionValue<number>;
+}) {
+  return (
+    <motion.div
+      style={{ opacity: phoneOpacity }}
+      className="w-[120px] sm:w-[140px] bg-[#1a1a1a] rounded-[28px] border border-white/10 p-2 relative shrink-0"
+    >
+      {/* Notch */}
+      <div className="w-12 h-3 bg-black rounded-full mx-auto mb-1" />
+      {/* Screen */}
+      <div className="bg-black rounded-2xl overflow-hidden p-2" style={{ minHeight: 180 }}>
+        <div className="text-white/60 text-[8px] font-semibold tracking-wider uppercase mb-1">Perplexity</div>
+        <div className="bg-white/10 rounded px-1.5 py-1 text-[7px] text-white/50 font-mono truncate mb-2">
+          {DEMO_QUERY}
+        </div>
+        <motion.div style={{ opacity: phoneBulletsOpacity }} className="space-y-1">
+          {DEMO_BULLETS.map((bullet, i) => (
+            <div key={i} className="flex items-start gap-1">
+              <span className="text-[#0071e3] text-[7px] mt-0.5 shrink-0">•</span>
+              <span className="text-white/70 text-[7px] leading-tight">{bullet}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+function DeviceDemo() {
+  const shouldReduceMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end end'],
+  });
+
+  const [typedQuery, setTypedQuery] = useState('');
+  const [activeStep, setActiveStep] = useState(0);
+
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    // Typing animation
+    if (v < 0.35) {
+      setTypedQuery('');
+    } else if (v > 0.55) {
+      setTypedQuery(DEMO_QUERY);
+    } else {
+      const progress = (v - 0.35) / (0.55 - 0.35);
+      const chars = Math.round(progress * DEMO_QUERY.length);
+      setTypedQuery(DEMO_QUERY.slice(0, chars));
+    }
+    // Step label
+    if (v < 0.35) setActiveStep(0);
+    else if (v < 0.55) setActiveStep(1);
+    else if (v < 0.70) setActiveStep(2);
+    else setActiveStep(3);
+  });
+
+  // Laptop transforms
+  const laptopScale = useTransform(scrollYProgress, [0.15, 0.35], [0.8, 1]);
+  const laptopX = useTransform(scrollYProgress, [0.70, 0.85], [0, -60]);
+  const glowOpacity = useTransform(scrollYProgress, [0.15, 0.35], [0, 1]);
+  const headlineOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+
+  // Bullet opacities
+  const bullet1Opacity = useTransform(scrollYProgress, [0.55, 0.60], [0, 1]);
+  const bullet2Opacity = useTransform(scrollYProgress, [0.60, 0.65], [0, 1]);
+  const bullet3Opacity = useTransform(scrollYProgress, [0.65, 0.70], [0, 1]);
+
+  // Phone transforms
+  const phoneOpacity = useTransform(scrollYProgress, [0.70, 0.85], [0, 1]);
+  const phoneX = useTransform(scrollYProgress, [0.70, 0.85], [60, 0]);
+  const phoneBulletsOpacity = useTransform(scrollYProgress, [0.85, 0.95], [0, 1]);
+  const continueOpacity = useTransform(scrollYProgress, [0.85, 1.0], [0, 1]);
+
+  if (shouldReduceMotion) {
+    return (
+      <section id="how" className="bg-[#1d1d1f] py-16 sm:py-20">
+        <div className="max-w-4xl mx-auto px-5 sm:px-6 text-white text-center">
+          <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
+          <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight mb-10">See it in action.</h2>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+            <LaptopScreen
+              typedQuery={DEMO_QUERY}
+              bullet1Opacity={motionValue(1)}
+              bullet2Opacity={motionValue(1)}
+              bullet3Opacity={motionValue(1)}
+              glowOpacity={motionValue(1)}
+            />
+            <PhoneScreen
+              phoneOpacity={motionValue(1)}
+              phoneBulletsOpacity={motionValue(1)}
+            />
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-4 max-w-md mx-auto text-left">
+            {STEP_LABELS.map((s, i) => (
+              <div key={i}>
+                <p className="text-white text-[13px] font-semibold">{s.headline}</p>
+                <p className="text-white/40 text-[12px] mt-0.5">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section ref={sectionRef} id="how" className="bg-[#1d1d1f] relative" style={{ minHeight: '300vh' }}>
+      {/* Desktop sticky scroll */}
+      <div className="sticky top-0 h-screen hidden md:flex flex-col items-center justify-center overflow-hidden px-5">
+        {/* Section label + headline */}
+        <motion.div style={{ opacity: headlineOpacity }} className="text-center mb-10">
+          <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
+          <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-white">See it in action.</h2>
+        </motion.div>
+
+        {/* Devices + step labels row */}
+        <div className="flex items-center gap-8 lg:gap-12">
+          {/* Laptop */}
+          <motion.div style={{ scale: laptopScale, x: laptopX }}>
+            <LaptopScreen
+              typedQuery={typedQuery}
+              bullet1Opacity={bullet1Opacity}
+              bullet2Opacity={bullet2Opacity}
+              bullet3Opacity={bullet3Opacity}
+              glowOpacity={glowOpacity}
+            />
+          </motion.div>
+
+          {/* Phone */}
+          <motion.div style={{ x: phoneX }}>
+            <PhoneScreen
+              phoneOpacity={phoneOpacity}
+              phoneBulletsOpacity={phoneBulletsOpacity}
+            />
+          </motion.div>
+
+          {/* Step labels */}
+          <div className="w-[200px] shrink-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeStep}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+              >
+                <p className="text-white font-semibold text-[16px] leading-snug">
+                  {STEP_LABELS[activeStep].headline}
+                </p>
+                <p className="text-white/50 text-[13px] mt-1.5">
+                  {STEP_LABELS[activeStep].sub}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* "Continue anywhere." label */}
+            <motion.p
+              style={{ opacity: continueOpacity }}
+              className="text-[#0071e3] text-[12px] font-semibold mt-4 uppercase tracking-widest"
+            >
+              Continue anywhere.
+            </motion.p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile static fallback */}
+      <div className="md:hidden py-16 px-5">
+        <div className="text-center mb-10">
+          <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
+          <h2 className="text-[28px] font-semibold tracking-tight text-white">See it in action.</h2>
+        </div>
+        <div className="flex justify-center gap-4 mb-10">
+          <LaptopScreen
+            typedQuery={DEMO_QUERY}
+            bullet1Opacity={motionValue(1)}
+            bullet2Opacity={motionValue(1)}
+            bullet3Opacity={motionValue(1)}
+            glowOpacity={motionValue(1)}
+          />
+          <PhoneScreen
+            phoneOpacity={motionValue(1)}
+            phoneBulletsOpacity={motionValue(1)}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-5 max-w-sm mx-auto">
+          {STEP_LABELS.map((s, i) => (
+            <div key={i}>
+              <p className="text-white text-[13px] font-semibold">{s.headline}</p>
+              <p className="text-white/40 text-[12px] mt-0.5">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Landing() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -523,35 +796,8 @@ export function Landing() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how" className="bg-[#1d1d1f] py-16 sm:py-20">
-        <div className="max-w-4xl mx-auto px-5 sm:px-6 text-center text-white">
-          <RevealDiv>
-            <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight mb-3 sm:mb-4">
-              How it works.
-            </h2>
-            <p className="text-[15px] sm:text-[17px] text-white/50 mb-12 sm:mb-16 max-w-md mx-auto">
-              Four simple steps. We handle most of them.
-            </p>
-          </RevealDiv>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { step: '01', icon: Calendar, title: 'You book', desc: 'Pick a time that works for you online or by phone' },
-              { step: '02', icon: MapPin, title: 'We come to you', desc: 'We arrive at your home or connect via Zoom' },
-              { step: '03', icon: Shield, title: 'We set it up', desc: 'Install Perplexity AI, configure privacy, and personalize it for you' },
-              { step: '04', icon: Star, title: 'We teach you', desc: 'Hands-on training until you feel confident' },
-            ].map((item, i) => (
-              <RevealDiv key={item.step} delay={0.06 + i * 0.07}>
-                <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-5 h-5 text-[#0071e3]" strokeWidth={1.8} />
-                </div>
-                <h3 className="text-[14px] sm:text-[15px] font-semibold mb-1.5">{item.title}</h3>
-                <p className="text-[12px] sm:text-[13px] text-white/40 leading-relaxed">{item.desc}</p>
-              </RevealDiv>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Device Demo */}
+      <DeviceDemo />
 
       {/* Testimonials */}
       <section className="max-w-5xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
