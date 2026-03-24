@@ -68,6 +68,8 @@ animate={isInView ? { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1 } : {}}
 
 Duration stays 0.65s. This applies globally to all sections that use `RevealDiv`.
 
+**Tailwind v4 / filter compatibility note:** Tailwind v4 uses CSS custom properties for filter utilities. Passing `filter: 'blur(8px)'` as an inline framer-motion style is safe because it writes directly to the element's `style` attribute, bypassing Tailwind entirely. However, if any existing `RevealDiv` elements carry Tailwind filter utility classes (e.g. `blur-*`), those classes must be removed from that element to avoid conflicts — framer-motion's inline style will not override a Tailwind class that also sets `filter`.
+
 **Card hover lift:** For the three product cards in "What we set up" and the three testimonial cards, wrap each in a `motion.div` (or change the existing div) with:
 
 ```tsx
@@ -92,7 +94,15 @@ This is the main feature. The existing dark `<section id="how">` is completely r
 </section>
 ```
 
-**Scroll progress:** Use framer-motion `useScroll` with `target` ref on the section and `offset: ['start start', 'end end']`. This gives a `scrollYProgress` value from 0→1 as the section scrolls.
+**Scroll progress:** Use framer-motion `useScroll` with `target` ref attached to the **outer `<section>` element** (not the sticky inner div) and `offset: ['start start', 'end end']`. This gives a `scrollYProgress` value from 0→1 as the section scrolls.
+
+```tsx
+const sectionRef = useRef<HTMLElement>(null)
+const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] })
+// ...
+<section ref={sectionRef} id="how" ...>
+  <div className="sticky top-0 h-screen ...">
+```
 
 **Animation stages** (driven by `scrollYProgress`):
 
@@ -106,6 +116,77 @@ This is the main feature. The existing dark `<section id="how">` is completely r
 | 0.85 → 1.00 | Same conversation appears on phone screen. "Continue anywhere." label fades in |
 
 Use `useTransform(scrollYProgress, [start, end], [from, to])` for each property.
+
+**Typing animation implementation (scroll range 0.35 → 0.55):**
+
+Do NOT use `useTransform` for the typewriter effect. Instead use `useMotionValueEvent` to derive state:
+
+```tsx
+const QUERY = "How do I dispute a charge on my bill?"
+const [typedQuery, setTypedQuery] = useState('')
+
+useMotionValueEvent(scrollYProgress, 'change', (v) => {
+  if (v < 0.35) {
+    setTypedQuery('')
+  } else if (v > 0.55) {
+    setTypedQuery(QUERY)
+  } else {
+    const progress = (v - 0.35) / (0.55 - 0.35)
+    const chars = Math.round(progress * QUERY.length)
+    setTypedQuery(QUERY.slice(0, chars))
+  }
+})
+```
+
+Render `typedQuery` directly in the search bar input area. Add a blinking cursor (`|`) when `typedQuery.length > 0 && typedQuery.length < QUERY.length`.
+
+**Bullet point stagger implementation (scroll range 0.55 → 0.70):**
+
+Each of the 3 bullet points maps to its own sub-range via separate `useTransform` calls:
+
+```tsx
+const bullet1Opacity = useTransform(scrollYProgress, [0.55, 0.60], [0, 1])
+const bullet2Opacity = useTransform(scrollYProgress, [0.60, 0.65], [0, 1])
+const bullet3Opacity = useTransform(scrollYProgress, [0.65, 0.70], [0, 1])
+```
+
+Render each bullet as `<motion.div style={{ opacity: bulletNOpacity }}>`.
+
+**Step label swap implementation (all progress ranges):**
+
+Use `useMotionValueEvent` to derive an `activeStep` integer (0–3), then use `AnimatePresence` with `mode="wait"` for crossfade:
+
+```tsx
+const [activeStep, setActiveStep] = useState(0)
+
+useMotionValueEvent(scrollYProgress, 'change', (v) => {
+  if (v < 0.35) setActiveStep(0)
+  else if (v < 0.55) setActiveStep(1)
+  else if (v < 0.70) setActiveStep(2)
+  else setActiveStep(3)
+})
+
+const stepLabels = [
+  { headline: "Open Perplexity on your computer.", sub: "It's already set up and ready." },
+  { headline: "Ask anything.", sub: "How do I dispute a charge on my bill?" },
+  { headline: "Get a real answer.", sub: "With sources. In plain English." },
+  { headline: "Continue on your phone.", sub: "Same Perplexity. Set up on both." },
+]
+
+// Render:
+<AnimatePresence mode="wait">
+  <motion.div
+    key={activeStep}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.25 }}
+  >
+    <p className="text-white font-semibold text-lg">{stepLabels[activeStep].headline}</p>
+    <p className="text-white/50 text-sm mt-1">{stepLabels[activeStep].sub}</p>
+  </motion.div>
+</AnimatePresence>
+```
 
 **Device Mockups:** CSS-only (no images). Built with divs styled as:
 
@@ -198,20 +279,38 @@ The pricing card wrapper needs `position: relative` and `overflow: visible`.
 
 ## Accessibility
 
-All animations check `prefers-reduced-motion`. Wrap all `motion.*` animation props:
+All animations check `prefers-reduced-motion`. Use **only** framer-motion's `useReducedMotion()` hook — do NOT use `window.matchMedia()` (it is not reactive and will not update if the user changes the system setting at runtime):
 
 ```tsx
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-// or use the framer-motion hook: useReducedMotion()
+const shouldReduceMotion = useReducedMotion() // boolean | null
 ```
 
-When reduced motion is preferred:
-- Skip blur/scale in RevealDiv (fade only)
-- Skip hero orb animation (show static, lower opacity)
-- Skip device demo scroll animation (show static mockup)
-- Skip pulse ring
+When `shouldReduceMotion` is `true`:
+- **RevealDiv:** Use `initial={{ opacity: 0 }}` / `animate={{ opacity: 1 }}` only — skip blur, scale, and y offset
+- **Hero orb:** Render static `<div>` with `opacity: 0.15`, skip `motion.div` entirely
+- **Device demo:** Render static mockup showing step 3 (answer visible) — skip the sticky scroll mechanic
+- **Pulse ring:** Do not render the `motion.div` ring at all
+- **Hero word-by-word:** Render headline as a single block fade-in instead of word stagger
 
-Use framer-motion's `useReducedMotion()` hook — it's built in.
+---
+
+## Required framer-motion Imports
+
+The following framer-motion exports are needed and must be added to the import statement in `Landing.tsx`:
+
+```tsx
+import {
+  motion,
+  AnimatePresence,       // NEW — step label crossfade
+  useScroll,             // NEW — scroll progress for device demo
+  useTransform,          // NEW — maps scrollYProgress to motion values
+  useMotionValueEvent,   // NEW — derives typed query string + activeStep from scroll
+  useReducedMotion,      // NEW — accessibility
+  useInView,             // existing — RevealDiv
+} from 'framer-motion'
+```
+
+Verify that the existing `Landing.tsx` import for framer-motion is extended (not duplicated).
 
 ---
 
