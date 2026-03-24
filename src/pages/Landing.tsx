@@ -546,9 +546,11 @@ export function Landing() {
                       : 'bg-white border border-black/[0.06]'
                   }`}
                 >
-                  {tier.popular && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] mb-4 block truncate">
-                      Most popular
+                  {(tier.savings || tier.popular) && (
+                    <span className={`text-[10px] font-bold uppercase tracking-widest mb-4 block truncate ${
+                      tier.savings ? 'text-[#34c759]' : 'text-[#0071e3]'
+                    }`}>
+                      {tier.savings ?? 'Most popular'}
                     </span>
                   )}
                   <h3
@@ -558,9 +560,18 @@ export function Landing() {
                   >
                     {tier.name}
                   </h3>
-                  <p className="text-[36px] sm:text-[42px] font-semibold tracking-tight mt-2 leading-none">
-                    ${tier.price}
-                  </p>
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <p className="text-[36px] sm:text-[42px] font-semibold tracking-tight leading-none">
+                      ${tier.price}
+                    </p>
+                    {tier.originalPrice && (
+                      <span className={`text-[16px] font-normal line-through ${
+                        tier.popular ? 'text-white/30' : 'text-[#bbb]'
+                      }`}>
+                        ${tier.originalPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-[14px] mt-2 mb-5 sm:mb-7 ${tier.popular ? 'text-white/40' : 'text-[#86868b]'}`}>
                     {tier.desc}
                   </p>
