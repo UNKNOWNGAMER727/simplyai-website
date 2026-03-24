@@ -1,5 +1,5 @@
 import { motion, useInView, useScroll } from 'framer-motion';
-import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X } from 'lucide-react';
+import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 // Scroll-triggered fade variant
@@ -205,6 +205,76 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
         </a>
       </nav>
     </motion.div>
+  );
+}
+
+function EmailCapture() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus('loading');
+    try {
+      await fetch('https://webhook.simplyai.tech/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), source: 'checklist-optin', name: '' }),
+      });
+      setStatus('done');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  return (
+    <section className="bg-[#f0f7ff] py-12 sm:py-16">
+      <div className="max-w-2xl mx-auto px-5 sm:px-6 text-center">
+        <RevealDiv>
+          <div className="inline-flex items-center gap-2 bg-[#0071e3]/10 rounded-full px-4 py-1.5 mb-5">
+            <Mail className="w-3.5 h-3.5 text-[#0071e3]" />
+            <span className="text-[12px] font-medium text-[#0071e3]">Free resource</span>
+          </div>
+          <h2 className="text-[24px] sm:text-[30px] font-semibold tracking-tight text-[#1d1d1f] mb-3">
+            Get the free AI Quick-Start Checklist
+          </h2>
+          <p className="text-[14px] sm:text-[16px] text-[#86868b] mb-7 max-w-md mx-auto">
+            10 things you can do with Perplexity AI today — even if you've never used AI before. Sent straight to your inbox.
+          </p>
+
+          {status === 'done' ? (
+            <div className="flex items-center justify-center gap-2 text-[#34c759] font-medium text-[15px]">
+              <Check className="w-5 h-5" strokeWidth={2.5} />
+              Sent! Check your inbox.
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                required
+                placeholder="Your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 px-5 py-3.5 rounded-full border border-black/[0.1] bg-white text-[14px] text-[#1d1d1f] placeholder:text-[#86868b] outline-none focus:ring-2 focus:ring-[#0071e3]/30 min-h-[48px]"
+              />
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="bg-[#0071e3] text-white px-6 py-3.5 rounded-full text-[14px] font-medium hover:bg-[#0077ED] transition-colors min-h-[48px] shrink-0 disabled:opacity-60"
+              >
+                {status === 'loading' ? 'Sending…' : 'Send it to me'}
+              </button>
+            </form>
+          )}
+          {status === 'error' && (
+            <p className="mt-3 text-[13px] text-red-500">Something went wrong — try calling us instead.</p>
+          )}
+          <p className="text-[11px] text-[#86868b] mt-4">No spam. Unsubscribe any time.</p>
+        </RevealDiv>
+      </div>
+    </section>
   );
 }
 
@@ -450,6 +520,9 @@ export function Landing() {
         </div>
       </section>
 
+      {/* Email Capture */}
+      <EmailCapture />
+
       {/* Pricing */}
       <section id="pricing" className="bg-[#f5f5f7] py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-5 sm:px-6">
@@ -564,7 +637,7 @@ export function Landing() {
               {[
                 { name: 'Basic', price: '$300', slug: 'basic-ai-setup-300', time: '60 min' },
                 { name: 'Pro', price: '$500', slug: 'pro-ai-setup-500', time: '90 min' },
-                { name: 'Premium', price: '$1,000', slug: 'premium-ai-setup-1000', time: '3 hrs' },
+                { name: 'Premium', price: '$1,000', slug: 'premium-ai-setup-1000', time: '2 hrs' },
               ].map((tier) => (
                 <a
                   key={tier.name}
