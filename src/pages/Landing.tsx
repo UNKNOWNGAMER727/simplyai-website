@@ -614,18 +614,21 @@ function DeviceDemo() {
           <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
           <h2 className="text-[28px] font-semibold tracking-tight text-white">See it in action.</h2>
         </div>
-        <div className="flex justify-center gap-4 mb-10">
-          <LaptopScreen
-            typedQuery={DEMO_QUERY}
-            bullet1Opacity={MV_ONE}
-            bullet2Opacity={MV_ONE}
-            bullet3Opacity={MV_ONE}
-            glowOpacity={MV_ONE}
-          />
-          <PhoneScreen
-            phoneOpacity={MV_ONE}
-            phoneBulletsOpacity={MV_ONE}
-          />
+        {/* Scale the devices down to fit small screens */}
+        <div className="flex justify-center mb-10 overflow-hidden">
+          <div className="flex items-end gap-3 scale-[0.72] origin-top">
+            <LaptopScreen
+              typedQuery={DEMO_QUERY}
+              bullet1Opacity={MV_ONE}
+              bullet2Opacity={MV_ONE}
+              bullet3Opacity={MV_ONE}
+              glowOpacity={MV_ONE}
+            />
+            <PhoneScreen
+              phoneOpacity={MV_ONE}
+              phoneBulletsOpacity={MV_ONE}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-5 max-w-sm mx-auto">
           {STEP_LABELS.map((s, i) => (
