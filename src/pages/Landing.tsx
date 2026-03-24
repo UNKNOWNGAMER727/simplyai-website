@@ -495,14 +495,16 @@ export function Landing() {
               desc: "We don't just install and leave. We sit with you, show you the best tricks, and make sure you feel confident.",
             },
           ].map((product, i) => (
-            <RevealDiv
-              key={product.name}
-              delay={i * 0.07}
-              className="bg-white rounded-2xl p-6 sm:p-7 text-center border border-black/[0.06] hover:shadow-lg hover:shadow-black/[0.04] transition-all duration-500"
-            >
-              <span className="text-4xl">{product.emoji}</span>
-              <h3 className="text-[16px] sm:text-[17px] font-semibold mt-4 mb-2 text-[#1d1d1f]">{product.name}</h3>
-              <p className="text-[13px] sm:text-[14px] text-[#86868b] leading-relaxed">{product.desc}</p>
+            <RevealDiv key={product.name} delay={i * 0.07}>
+              <motion.div
+                whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.10)' }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl p-6 sm:p-7 text-center border border-black/[0.06] h-full"
+              >
+                <span className="text-4xl">{product.emoji}</span>
+                <h3 className="text-[16px] sm:text-[17px] font-semibold mt-4 mb-2 text-[#1d1d1f]">{product.name}</h3>
+                <p className="text-[13px] sm:text-[14px] text-[#86868b] leading-relaxed">{product.desc}</p>
+              </motion.div>
             </RevealDiv>
           ))}
         </div>
@@ -571,19 +573,31 @@ export function Landing() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
           {testimonials.map((t, i) => (
-            <RevealDiv
-              key={t.name}
-              delay={i * 0.08}
-              className="bg-white rounded-2xl border border-black/[0.06] p-6 sm:p-7"
-            >
-              <StarRow count={t.stars} />
-              <p className="text-[14px] sm:text-[15px] text-[#424245] leading-relaxed mt-4 mb-5">
-                "{t.quote}"
-              </p>
-              <div>
-                <p className="text-[13px] font-semibold text-[#1d1d1f]">{t.name}</p>
-                <p className="text-[12px] text-[#86868b] mt-0.5">{t.role} · {t.location}</p>
-              </div>
+            <RevealDiv key={t.name} delay={i * 0.08}>
+              <motion.div
+                whileHover={{ y: -3, scale: 1.01 }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-2xl border border-black/[0.06] p-6 sm:p-7 h-full"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: '-60px' }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="text-[48px] leading-none text-[#0071e3]/20 font-serif mb-2 select-none"
+                  aria-hidden="true"
+                >
+                  "
+                </motion.div>
+                <StarRow count={t.stars} />
+                <p className="text-[14px] sm:text-[15px] text-[#424245] leading-relaxed mt-4 mb-5">
+                  "{t.quote}"
+                </p>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1d1d1f]">{t.name}</p>
+                  <p className="text-[12px] text-[#86868b] mt-0.5">{t.role} · {t.location}</p>
+                </div>
+              </motion.div>
             </RevealDiv>
           ))}
         </div>
