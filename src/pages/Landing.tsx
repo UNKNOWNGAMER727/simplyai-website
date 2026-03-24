@@ -338,7 +338,7 @@ export function Landing() {
             We specialize in Perplexity AI — the smartest, most useful AI tool for everyday people.
           </p>
         </RevealDiv>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {[
             {
               emoji: '🔍',
@@ -380,7 +380,7 @@ export function Landing() {
               Four simple steps. We handle most of them.
             </p>
           </RevealDiv>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {[
               { step: '01', icon: Calendar, title: 'You book', desc: 'Pick a time that works for you online or by phone' },
               { step: '02', icon: MapPin, title: 'We come to you', desc: 'We arrive at your home or connect via Zoom' },
@@ -430,7 +430,7 @@ export function Landing() {
           ))}
         </RevealDiv>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
           {testimonials.map((t, i) => (
             <RevealDiv
               key={t.name}
@@ -462,7 +462,7 @@ export function Landing() {
             </p>
           </RevealDiv>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-5">
             {tiers.map((tier, i) => (
               <RevealDiv key={tier.name} delay={i * 0.07}>
                 <div
@@ -560,7 +560,7 @@ export function Landing() {
                 <Calendar className="w-4 h-4" /> Book Online
               </a>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
               {[
                 { name: 'Basic', price: '$300', slug: 'basic-ai-setup-300', time: '60 min' },
                 { name: 'Pro', price: '$500', slug: 'pro-ai-setup-500', time: '90 min' },
