@@ -11,9 +11,6 @@ import {
 import { Check, Phone, Calendar, Shield, Star, ChevronDown, MapPin, ArrowRight, Menu, X, Mail } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-// Placeholder to suppress unused import warnings for Task 2+ animations
-void [AnimatePresence, useTransform, useMotionValueEvent, motionValue];
-
 // Scroll-triggered fade variant
 function useReveal() {
   const ref = useRef(null);
