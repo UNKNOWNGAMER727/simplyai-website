@@ -382,6 +382,9 @@ const STEP_LABELS = [
   { headline: "Continue on your phone.", sub: "Same Perplexity. Set up on both." },
 ];
 
+// Shared static MotionValue for fallback paths (reduced-motion and mobile)
+const MV_ONE = motionValue(1);
+
 function LaptopScreen({ typedQuery, bullet1Opacity, bullet2Opacity, bullet3Opacity, glowOpacity }: {
   typedQuery: string;
   bullet1Opacity: MotionValue<number>;
@@ -521,14 +524,14 @@ function DeviceDemo() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <LaptopScreen
               typedQuery={DEMO_QUERY}
-              bullet1Opacity={motionValue(1)}
-              bullet2Opacity={motionValue(1)}
-              bullet3Opacity={motionValue(1)}
-              glowOpacity={motionValue(1)}
+              bullet1Opacity={MV_ONE}
+              bullet2Opacity={MV_ONE}
+              bullet3Opacity={MV_ONE}
+              glowOpacity={MV_ONE}
             />
             <PhoneScreen
-              phoneOpacity={motionValue(1)}
-              phoneBulletsOpacity={motionValue(1)}
+              phoneOpacity={MV_ONE}
+              phoneBulletsOpacity={MV_ONE}
             />
           </div>
           <div className="mt-10 grid grid-cols-2 gap-4 max-w-md mx-auto text-left">
@@ -614,14 +617,14 @@ function DeviceDemo() {
         <div className="flex justify-center gap-4 mb-10">
           <LaptopScreen
             typedQuery={DEMO_QUERY}
-            bullet1Opacity={motionValue(1)}
-            bullet2Opacity={motionValue(1)}
-            bullet3Opacity={motionValue(1)}
-            glowOpacity={motionValue(1)}
+            bullet1Opacity={MV_ONE}
+            bullet2Opacity={MV_ONE}
+            bullet3Opacity={MV_ONE}
+            glowOpacity={MV_ONE}
           />
           <PhoneScreen
-            phoneOpacity={motionValue(1)}
-            phoneBulletsOpacity={motionValue(1)}
+            phoneOpacity={MV_ONE}
+            phoneBulletsOpacity={MV_ONE}
           />
         </div>
         <div className="grid grid-cols-2 gap-5 max-w-sm mx-auto">
