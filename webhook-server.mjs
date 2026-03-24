@@ -6,7 +6,14 @@
  */
 
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createTransport } from 'nodemailer';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const CALL_LOG_PATH = path.join(__dirname, 'webhook-calls.json');
+const LEAD_LOG_PATH = path.join(__dirname, 'webhook-leads.json');
 
 const PORT = 3200;
 const PAPERCLIP_URL = 'http://127.0.0.1:3100/api';
@@ -21,9 +28,27 @@ const mailer = createTransport({
   },
 });
 
-// ── In-memory storage (persists until server restart) ──────────────────
-const callLog = [];
-const leadLog = [];
+// ── File-backed storage ────────────────────────────────────────────────
+function loadCallLog() {
+  try { return JSON.parse(fs.readFileSync(CALL_LOG_PATH, 'utf-8')); } catch { return []; }
+}
+
+function saveCallLog() {
+  if (callLog.length > 200) callLog.length = 200;
+  fs.writeFileSync(CALL_LOG_PATH, JSON.stringify(callLog, null, 2));
+}
+
+function loadLeadLog() {
+  try { return JSON.parse(fs.readFileSync(LEAD_LOG_PATH, 'utf-8')); } catch { return []; }
+}
+
+function saveLeadLog() {
+  if (leadLog.length > 200) leadLog.length = 200;
+  fs.writeFileSync(LEAD_LOG_PATH, JSON.stringify(leadLog, null, 2));
+}
+
+const callLog = loadCallLog();
+const leadLog = loadLeadLog();
 
 // Agent IDs
 const AGENTS = {
@@ -112,7 +137,7 @@ async function handleBookingCreated(payload) {
       `• Close any sensitive documents or files\n` +
       `• Have your computer login password ready\n` +
       `\nIf you need to reschedule, visit: cal.com/simplytech.ai\n` +
-      `\nQuestions? Call us at (818) 600-6825 or reply to this email.\n` +
+      `\nQuestions? Call us at (361) 315-8585 or reply to this email.\n` +
       `\nWe're excited to help you get started with AI!\n\n` +
       `— Kyle & the Simply AI team\n` +
       `simplyai.tech`;
@@ -151,7 +176,7 @@ async function handleBookingCancelled(payload) {
     const emailBody = `Hi ${info.name},\n\nWe're sorry to see you cancel your appointment. We understand schedules can change!\n\n` +
       `If you'd like to reschedule, it's easy:\n` +
       `📅 Book a new time: cal.com/simplytech.ai\n` +
-      `📞 Or call us: (818) 600-6825\n\n` +
+      `📞 Or call us: (361) 315-8585\n\n` +
       `We'd love to help you get started with AI whenever you're ready.\n\n` +
       `— Kyle & the Simply AI team`;
 
@@ -183,7 +208,7 @@ async function handleBookingRescheduled(payload) {
       `📍 Location: ${info.isRemote ? 'Remote via Zoom' : 'In-person'}\n` +
       (info.meetingUrl ? `🔗 Meeting Link: ${info.meetingUrl}\n` : '') +
       `\nSame prep applies — have your computer on, connected to Wi-Fi, and ready to go!\n\n` +
-      `Questions? Call (818) 600-6825 or reply to this email.\n\n` +
+      `Questions? Call (361) 315-8585 or reply to this email.\n\n` +
       `— Kyle & the Simply AI team`;
 
     try {
@@ -262,6 +287,7 @@ const server = http.createServer(async (req, res) => {
         createdAt: new Date().toISOString(),
       };
       leadLog.unshift(lead);
+      saveLeadLog();
       console.log(`  👤 Lead added: ${lead.name} (${lead.phone})`);
       return respond(200, lead);
     } catch (err) {
@@ -275,6 +301,7 @@ const server = http.createServer(async (req, res) => {
     const idx = leadLog.findIndex(l => l.id === id);
     if (idx !== -1) {
       const removed = leadLog.splice(idx, 1)[0];
+      saveLeadLog();
       console.log(`  🗑️ Lead deleted: ${removed.name}`);
       return respond(200, { deleted: true, id });
     }
@@ -287,6 +314,7 @@ const server = http.createServer(async (req, res) => {
     const idx = callLog.findIndex(c => c.id === id);
     if (idx !== -1) {
       const removed = callLog.splice(idx, 1)[0];
+      saveCallLog();
       console.log(`  🗑️ Call deleted: ${removed.callerName || removed.callerPhone}`);
       return respond(200, { deleted: true, id });
     }
@@ -356,7 +384,7 @@ const server = http.createServer(async (req, res) => {
         followUpStatus: 'none',
         leadId: null,
       });
-      if (callLog.length > 100) callLog.length = 100; // keep last 100
+      saveCallLog();
 
       // Create task for Lead Handler
       const taskTitle = didBook

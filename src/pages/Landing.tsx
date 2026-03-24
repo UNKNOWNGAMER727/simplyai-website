@@ -149,7 +149,7 @@ function FAQ({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-5 text-left min-h-[44px]"
       >
-        <span className="text-[15px] sm:text-[16px] font-medium text-[#1d1d1f] pr-6">{q}</span>
+        <span className="text-[14px] sm:text-[16px] font-medium text-[#1d1d1f] pr-4 sm:pr-6 break-words">{q}</span>
         <ChevronDown
           className={`w-5 h-5 text-[#86868b] shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
           strokeWidth={1.8}
@@ -466,14 +466,14 @@ export function Landing() {
             {tiers.map((tier, i) => (
               <RevealDiv key={tier.name} delay={i * 0.07}>
                 <div
-                  className={`rounded-3xl p-7 sm:p-8 h-full ${
+                  className={`rounded-3xl p-5 sm:p-7 h-full ${
                     tier.popular
                       ? 'bg-[#1d1d1f] text-white ring-1 ring-[#1d1d1f]'
                       : 'bg-white border border-black/[0.06]'
                   }`}
                 >
                   {tier.popular && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] mb-4 block">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#0071e3] mb-4 block truncate">
                       Most popular
                     </span>
                   )}
@@ -484,17 +484,17 @@ export function Landing() {
                   >
                     {tier.name}
                   </h3>
-                  <p className="text-[44px] sm:text-[48px] font-semibold tracking-tight mt-2 leading-none">
+                  <p className="text-[36px] sm:text-[42px] font-semibold tracking-tight mt-2 leading-none">
                     ${tier.price}
                   </p>
-                  <p className={`text-[14px] mt-2 mb-7 sm:mb-8 ${tier.popular ? 'text-white/40' : 'text-[#86868b]'}`}>
+                  <p className={`text-[14px] mt-2 mb-5 sm:mb-7 ${tier.popular ? 'text-white/40' : 'text-[#86868b]'}`}>
                     {tier.desc}
                   </p>
                   <a
                     href={`https://cal.com/simplytech.ai/${tier.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`block text-center py-3 rounded-full text-[14px] font-medium mb-6 transition-colors min-h-[44px] flex items-center justify-center ${
+                    className={`w-full block text-center py-3 rounded-full text-[14px] font-medium mb-5 sm:mb-6 transition-colors min-h-[44px] flex items-center justify-center ${
                       tier.popular
                         ? 'bg-[#0071e3] text-white hover:bg-[#0077ED]'
                         : 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]'
@@ -502,14 +502,14 @@ export function Landing() {
                   >
                     Book Now
                   </a>
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {tier.features.map((f) => (
-                      <div key={f} className="flex items-start gap-2.5">
+                      <div key={f} className="flex items-start gap-2">
                         <Check
                           className={`w-4 h-4 shrink-0 mt-0.5 ${tier.popular ? 'text-[#0071e3]' : 'text-[#34c759]'}`}
                           strokeWidth={2.5}
                         />
-                        <span className={`text-[13px] leading-snug ${tier.popular ? 'text-white/70' : 'text-[#424245]'}`}>
+                        <span className={`text-[12px] sm:text-[13px] leading-snug ${tier.popular ? 'text-white/70' : 'text-[#424245]'}`}>
                           {f}
                         </span>
                       </div>
@@ -539,15 +539,15 @@ export function Landing() {
       {/* Booking CTA */}
       <section id="book" className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-20">
         <RevealDiv>
-          <div className="bg-[#1d1d1f] rounded-3xl p-8 sm:p-12 text-center text-white">
-            <h2 className="text-[26px] sm:text-[32px] font-semibold tracking-tight mb-3">Ready to get started?</h2>
-            <p className="text-[15px] sm:text-[17px] text-white/50 mb-7 sm:mb-8 max-w-md mx-auto">
+          <div className="bg-[#1d1d1f] rounded-3xl p-6 sm:p-12 text-center text-white">
+            <h2 className="text-[22px] sm:text-[32px] font-semibold tracking-tight mb-3">Ready to get started?</h2>
+            <p className="text-[14px] sm:text-[17px] text-white/50 mb-6 sm:mb-8 max-w-md mx-auto">
               Book your Perplexity install today. We'll come to you, get everything set up, and make sure you're comfortable using it before we leave.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-7 sm:mb-8 px-2 sm:px-0">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <a
                 href="tel:+13613158585"
-                className="inline-flex items-center justify-center gap-2 bg-white text-[#1d1d1f] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-white/90 transition-colors min-h-[52px] sm:min-h-[44px]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#1d1d1f] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-white/90 transition-colors min-h-[52px] sm:min-h-[44px]"
               >
                 <Phone className="w-4 h-4" /> (361) 315-8585
               </a>
@@ -555,7 +555,7 @@ export function Landing() {
                 href="https://cal.com/simplytech.ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 text-white px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium border border-white/20 hover:bg-white/10 transition-colors min-h-[52px] sm:min-h-[44px]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium border border-white/20 hover:bg-white/10 transition-colors min-h-[52px] sm:min-h-[44px]"
               >
                 <Calendar className="w-4 h-4" /> Book Online
               </a>
@@ -571,10 +571,10 @@ export function Landing() {
                   href={`https://cal.com/simplytech.ai/${tier.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl p-5 text-center transition-all duration-300 min-h-[44px]"
+                  className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl p-3 sm:p-5 text-center transition-all duration-300 min-h-[44px]"
                 >
-                  <p className="text-[20px] font-semibold text-white">{tier.price}</p>
-                  <p className="text-[13px] text-white/50 mt-1">{tier.name} · {tier.time}</p>
+                  <p className="text-[18px] sm:text-[20px] font-semibold text-white">{tier.price}</p>
+                  <p className="text-[12px] sm:text-[13px] text-white/50 mt-1">{tier.name} · {tier.time}</p>
                   <p className="text-[12px] text-[#0071e3] mt-2 font-medium">Book Now</p>
                 </a>
               ))}
