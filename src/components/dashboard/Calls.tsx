@@ -42,16 +42,21 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-function CallRow({ call }: { call: Call }) {
+function CallRow({ call, followUpOverride, onToggleFollowUp }: {
+  call: Call;
+  followUpOverride?: 'none' | 'sent';
+  onToggleFollowUp: (id: string) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
   const missed = isMissed(call);
+  const effectiveFollowUp = followUpOverride ?? call.followUpStatus;
 
   const rowAccent = missed
     ? 'border-l-red-500'
     : call.didBook
       ? 'border-l-[#34c759]'
-      : call.followUpStatus === 'none'
+      : effectiveFollowUp === 'none'
         ? 'border-l-[#ff9f0a]'
         : 'border-l-[#0071e3]';
 
@@ -149,17 +154,17 @@ function CallRow({ call }: { call: Call }) {
           </span>
         )}
 
-        {call.followUpStatus === 'sent' && (
+        {effectiveFollowUp === 'sent' && (
           <span className="hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-full bg-[#0071e3]/15 text-[#0071e3]">
             Follow-up sent
           </span>
         )}
-        {call.followUpStatus === 'responded' && (
+        {effectiveFollowUp === 'responded' && (
           <span className="hidden md:inline-flex text-xs font-medium px-2 py-0.5 rounded-full bg-[#34c759]/15 text-[#34c759]">
             Responded
           </span>
         )}
-        {call.followUpStatus === 'none' && !call.didBook && !missed && (
+        {effectiveFollowUp === 'none' && !call.didBook && !missed && (
           <span className="hidden md:inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-[#ff9f0a]/15 text-[#ff9f0a]">
             <AlertCircle size={10} />
             Needs follow-up
@@ -239,7 +244,7 @@ function CallRow({ call }: { call: Call }) {
                     color="#0071e3"
                   />
                 )}
-                {call.followUpStatus === 'none' && !missed && (
+                {effectiveFollowUp === 'none' && !missed && (
                   <ActionButton
                     onClick={makeAction('follow-up')}
                     icon={<Send size={12} />}
@@ -247,6 +252,15 @@ function CallRow({ call }: { call: Call }) {
                     variant="accent"
                     color="#34c759"
                   />
+                )}
+                {!missed && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleFollowUp(call.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                  >
+                    {effectiveFollowUp === 'sent' ? 'Mark Needs Follow-up' : 'Mark Follow-up Done'}
+                  </button>
                 )}
               </div>
             </div>
@@ -267,7 +281,23 @@ export function Calls() {
   const [allCalls, setAllCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [followUpOverrides, setFollowUpOverrides] = useState<Record<string, 'none' | 'sent'>>(() => {
+    try {
+      const saved = localStorage.getItem('simplyai-followup-overrides');
+      return saved ? (JSON.parse(saved) as Record<string, 'none' | 'sent'>) : {};
+    } catch { return {}; }
+  });
   const { toast } = useToast();
+
+  function onToggleFollowUp(id: string) {
+    setFollowUpOverrides(prev => {
+      const current = prev[id] ?? allCalls.find(c => c.id === id)?.followUpStatus ?? 'none';
+      const next: 'none' | 'sent' = current === 'none' ? 'sent' : 'none';
+      const updated = { ...prev, [id]: next };
+      try { localStorage.setItem('simplyai-followup-overrides', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }
 
   const loadCalls = useCallback(async () => {
     try {
@@ -287,8 +317,12 @@ export function Calls() {
             duration: secs === 0 ? '0:00' : `${mins}:${String(sec).padStart(2, '0')}`,
             summary: (c.summary as string) ?? '',
             transcript: (c.transcript as string | null) ?? null,
-            didBook: false,
-            followUpStatus: 'none',
+            didBook: Boolean((c.didBook as boolean | undefined) ?? false),
+            followUpStatus: (() => {
+              const s = c.followUpStatus as string | undefined;
+              if (s === 'sent' || s === 'responded') return s;
+              return 'none';
+            })(),
             leadId: null,
           };
         });
@@ -308,13 +342,17 @@ export function Calls() {
     return () => clearInterval(interval);
   }, [loadCalls]);
 
-  const filtered = filterCalls(allCalls, activeFilter);
+  const effectiveCalls = allCalls.map(c => ({
+    ...c,
+    followUpStatus: followUpOverrides[c.id] ?? c.followUpStatus,
+  }));
+  const filtered = filterCalls(effectiveCalls, activeFilter);
 
   const totalCalls = allCalls.length;
   const answeredCount = allCalls.filter(c => !isMissed(c)).length;
   const bookedCount = allCalls.filter(c => c.didBook).length;
   const missedCount = allCalls.filter(c => isMissed(c)).length;
-  const needsFollowUp = allCalls.filter(c => !isMissed(c) && !c.didBook && c.followUpStatus === 'none').length;
+  const needsFollowUp = effectiveCalls.filter(c => !isMissed(c) && !c.didBook && c.followUpStatus === 'none').length;
 
   const stats = [
     { label: 'Total', value: totalCalls, color: '#0071e3', gradient: 'rgba(0,113,227,0.10)' },
@@ -395,7 +433,12 @@ export function Calls() {
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filtered.map((call) => (
-            <CallRow key={call.id} call={call} />
+            <CallRow
+              key={call.id}
+              call={call}
+              followUpOverride={followUpOverrides[call.id]}
+              onToggleFollowUp={onToggleFollowUp}
+            />
           ))}
         </AnimatePresence>
         {filtered.length === 0 && totalCalls > 0 && (
@@ -405,7 +448,7 @@ export function Calls() {
           <EmptyState
             icon={Phone}
             title="No calls yet"
-            description="When calls come in through ElevenLabs at (361) 315-8585, they'll appear here with AI-generated summaries and one-click follow-up actions."
+            description="When calls come in through ElevenLabs at (818) 600-6825, they'll appear here with AI-generated summaries and one-click follow-up actions."
           />
         )}
       </div>

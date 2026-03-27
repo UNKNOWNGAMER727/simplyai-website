@@ -55,7 +55,64 @@ function filterBookings(bookings: readonly Booking[], filter: FilterKey): Bookin
   }
 }
 
-function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: string) => void }) {
+function CalendarGrid({ bookings }: { bookings: Booking[] }) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Group bookings by day-of-month
+  const byDay: Record<number, Booking[]> = {};
+  bookings.forEach(b => {
+    const d = new Date(b.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(b);
+    }
+  });
+
+  const monthName = today.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+
+  return (
+    <div className="bg-[#1a1a1a] rounded-xl border border-white/10 p-4">
+      <p className="text-sm font-semibold text-white mb-3">{monthName}</p>
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-500 mb-1">
+        {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => (
+          <div
+            key={i}
+            className={`min-h-[48px] rounded-lg p-1 text-xs ${
+              day === null ? '' : 'border border-white/5 bg-[#111]'
+            } ${day === today.getDate() ? 'border-[#0071e3]/50' : ''}`}
+          >
+            {day !== null && (
+              <>
+                <p className={`text-[10px] font-medium mb-0.5 ${day === today.getDate() ? 'text-[#0071e3]' : 'text-gray-500'}`}>{day}</p>
+                {(byDay[day] ?? []).map(b => (
+                  <div
+                    key={b.id}
+                    className="truncate rounded px-1 py-0.5 text-[9px] font-medium mb-0.5"
+                    style={{ backgroundColor: b.status === 'confirmed' ? 'rgba(52,199,89,0.15)' : 'rgba(255,159,10,0.15)', color: b.status === 'confirmed' ? '#34c759' : '#ff9f0a' }}
+                    title={`${b.clientName} — ${b.time}`}
+                  >
+                    {b.clientName.split(' ')[0]}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BookingRow({ booking, onRemove, isLiveData }: { booking: Booking; onRemove: (id: string) => void; isLiveData: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
 
@@ -112,7 +169,10 @@ function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: st
         break;
       }
       case 'cancel': {
-        // Cancel via Cal.com API
+        if (!isLiveData) {
+          toast('Contact client directly to cancel — live Cal.com data required');
+          break;
+        }
         const res = await fetch(`/calcom/bookings/${booking.id}/cancel`, {
           method: 'POST',
           headers: {
@@ -123,7 +183,6 @@ function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: st
           body: JSON.stringify({ cancellationReason: 'Cancelled from CRM dashboard' }),
         });
         if (!res.ok) throw new Error(`Cancel failed: ${res.status}`);
-        // Create follow-up task
         await createIssue({
           title: `Follow up on cancellation: ${booking.clientName}`,
           description: `${booking.clientName} cancelled their ${booking.tier} booking for ${booking.date}. Reach out in 2-3 days with a gentle message offering to reschedule. Booking link: cal.com/simplytech.ai`,
@@ -135,7 +194,10 @@ function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: st
         break;
       }
       case 'reschedule': {
-        // Open Cal.com reschedule page
+        if (!isLiveData) {
+          toast('Contact client directly to reschedule — live Cal.com data required');
+          break;
+        }
         window.open(`https://cal.com/reschedule/${booking.id}`, '_blank');
         toast('Reschedule page opened in new tab');
         break;
@@ -213,8 +275,7 @@ function BookingRow({ booking, onRemove }: { booking: Booking; onRemove: (id: st
                 )}
                 <ActionButtonShared
                   onClick={async () => {
-                    // Cancel on Cal.com if still active
-                    if (isUpcoming) {
+                    if (isUpcoming && isLiveData) {
                       try {
                         await fetch(`/calcom/bookings/${booking.id}/cancel`, {
                           method: 'POST',
@@ -362,18 +423,25 @@ export function Bookings() {
             <Loader2 className="w-5 h-5 text-[#0071e3] animate-spin" />
             <span className="ml-3 text-sm text-gray-400">Loading from Cal.com...</span>
           </div>
+        ) : viewMode === 'calendar' ? (
+          <CalendarGrid bookings={visibleBookings} />
         ) : (
           <AnimatePresence mode="popLayout">
             {filtered.map((booking) => (
-              <BookingRow key={booking.id} booking={booking} onRemove={(id) => {
-                const next = new Set(hiddenIds);
-                next.add(id);
-                persistHidden(next);
-              }} />
+              <BookingRow
+                key={booking.id}
+                booking={booking}
+                isLiveData={dataSource === 'live'}
+                onRemove={(id) => {
+                  const next = new Set(hiddenIds);
+                  next.add(id);
+                  persistHidden(next);
+                }}
+              />
             ))}
           </AnimatePresence>
         )}
-        {dataSource !== 'loading' && filtered.length === 0 && (
+        {dataSource !== 'loading' && viewMode === 'list' && filtered.length === 0 && (
           <div className="text-center py-12 text-gray-500 text-sm">No bookings match this filter.</div>
         )}
       </div>
