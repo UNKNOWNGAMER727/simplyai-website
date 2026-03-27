@@ -149,38 +149,38 @@ function CountUp({ to, suffix = '' }: { to: number; suffix?: string }) {
 // ── Data ──────────────────────────────────────────────────────────────────────
 const tiers = [
   {
-    name: 'Solo', price: 279, originalPrice: 300, slug: 'basic-ai-setup-300',
-    desc: 'Just you, fully set up.',
-    features: ['Perplexity on your computer','Perplexity on your phone','Personal walkthrough so you know how to use it','Quick-start cheat sheet to keep'],
+    name: 'Starter', price: 199, slug: 'discovery',
+    desc: 'Per computer. Perplexity Free, fully installed.',
+    features: ['Perplexity AI installed & configured on each computer','Account setup per user','Privacy & security settings applied','Quick-start tips sheet for each employee'],
   },
   {
-    name: 'Household', price: 449, originalPrice: 500, slug: 'pro-ai-setup-500',
-    desc: 'The whole family, fully set up.', popular: true, savings: 'Saves $390',
-    features: ['Up to 3 computers',"Everyone's phones",'Each person gets their own walkthrough','Quick-start cheat sheet for each person'],
+    name: 'Pro', price: 299, slug: 'discovery',
+    desc: 'Per computer. Full Perplexity Pro setup.', popular: true,
+    features: ['Everything in Starter','Perplexity Pro (first month included)','Custom shortcuts & workflow setup','Industry-specific team tips sheet built for your business','Priority scheduling'],
   },
   {
-    name: 'Business', price: 799, originalPrice: 1000, slug: 'premium-ai-setup-1000',
-    desc: 'Your whole team, fully set up.', savings: 'Saves $1,434',
-    features: ['Up to 8 devices',"Everyone's phones",'Each person gets their own walkthrough','Custom AI prompt library built for your business','Quick-start cheat sheet for each person'],
+    name: 'Phone Add-on', price: 99, slug: 'discovery',
+    desc: 'Per employee phone. Mobile Perplexity setup.',
+    features: ['Perplexity installed on employee phones','Mobile app configured & synced to desktop','Same account as computer setup','Add to any Starter or Pro plan'],
   },
 ];
 
 const faqs = [
-  { q: 'What exactly do you install?', a: 'We install and set up Perplexity AI — the smartest AI search tool available. It answers questions with real sources, helps you research anything, drafts emails, and saves you hours every week. We get it fully configured and show you how to get the most out of it.' },
-  { q: 'Do I need to be tech-savvy?', a: "Not at all. That's exactly why we exist. We handle everything — installation, setup, and a hands-on tutorial in plain English. By the time we leave, you'll actually know how to use it." },
-  { q: 'How long does a visit take?', a: "It depends on how many devices you have and how many questions you have — we don't rush. We stay until you feel comfortable and confident using it. Most solo visits wrap up in under an hour, but we're not watching the clock." },
-  { q: 'Is this a subscription? Will I owe monthly fees?', a: "Our service is a one-time fee. Perplexity has a free version that works great. There's an optional Pro upgrade for $20/month if you want extra features, but we'll show you both and you decide — no pressure." },
-  { q: 'What area do you serve?', a: 'We serve the greater Los Angeles area in person (Chatsworth, Northridge, Encino, Tarzana, and surrounding neighborhoods). We also offer remote setup via Zoom for customers anywhere in the US.' },
-  { q: 'Is Perplexity safe to use?', a: "Yes. Perplexity is a trusted, well-funded company used by millions of people worldwide. We configure your privacy settings as part of every install so you start off right." },
+  { q: 'What exactly do you install?', a: 'We install and configure Perplexity AI — the leading AI research tool for businesses. It answers questions with cited sources, helps your team draft documents, research anything, and get work done faster. We handle every step: installation, account setup, privacy configuration, and shortcuts tailored to your industry.' },
+  { q: 'Does my team need any tech skills?', a: "None. Perplexity is the easiest AI tool available — your team will pick it up immediately. We configure everything, get it running on every machine, and leave a tips sheet. Most employees are using it confidently within minutes of us finishing." },
+  { q: 'How long does an office visit take?', a: "For most offices of 2–5 people, we're done in under an hour. Larger teams may take a bit longer. We work efficiently — this isn't a training session, it's a setup. We get in, get it done, and get out." },
+  { q: 'Is this a one-time fee or ongoing?', a: "Our service is a one-time fee per computer. We don't charge monthly retainers. Perplexity has a free version that works great for most businesses, and an optional Pro upgrade at $20/month per user if you want the full power — we'll show you both and you decide." },
+  { q: 'What area do you serve?', a: 'We serve the greater Los Angeles area in person — including the Valley (Chatsworth, Northridge, Encino, Tarzana), West LA, and surrounding neighborhoods. Outside LA? We offer remote setup via Zoom for businesses anywhere in the US.' },
+  { q: 'Is Perplexity safe for business use?', a: "Yes. Perplexity is a well-funded company trusted by millions of professionals worldwide. We configure privacy settings on every install to ensure your team's searches and data are handled appropriately from day one." },
 ];
 
 const testimonials = [
-  { name: 'Barbara M.', location: 'Northridge, CA', role: 'Retired teacher', stars: 5,
-    quote: "I was so nervous about AI — I thought it was just for young people. The technician was incredibly patient, explained everything in plain English, and now I use Perplexity every single day. Best $279 I've spent in years." },
-  { name: 'Frank R.', location: 'Encino, CA', role: 'Small business owner', stars: 5,
-    quote: 'I run a plumbing company and had zero idea how AI could help me. After the visit, I now use it to write estimates, answer customer emails, and research codes. It paid for itself in the first week.' },
-  { name: 'Diane L.', location: 'Tarzana, CA', role: 'Realtor', stars: 5,
-    quote: "Setting up software always stressed me out. These guys showed up on time, set everything up perfectly on my laptop and iPad, and actually taught me how to use it. No confusion, no tech jargon. Highly recommend." },
+  { name: 'Marcus T.', location: 'Studio City, CA', role: 'Law firm office manager', stars: 5,
+    quote: "We had 5 attorneys and none of them were using AI. SimplyAI came in, set up Perplexity on every computer in under an hour, and left. No long meetings, no training sessions. Our team figured it out on their own — it's that intuitive." },
+  { name: 'Frank R.', location: 'Encino, CA', role: 'Plumbing company owner', stars: 5,
+    quote: 'I had zero idea how AI could help my business. After the visit, I now use it to write estimates, answer customer emails, and look up codes. It paid for itself in the first week.' },
+  { name: 'Diane L.', location: 'Tarzana, CA', role: 'Real estate team lead', stars: 5,
+    quote: "I run a small real estate team. They installed Perplexity on all three of our computers in about 45 minutes. No disruption to our day. We were using it the same afternoon to write listings. Highly recommend." },
 ];
 
 function StarRow({ count }: { count: number }) {
@@ -225,11 +225,11 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
         {[{ href: '#pricing', label: 'Pricing' },{ href: '#how', label: 'How It Works' },{ href: '#faq', label: 'FAQ' }].map(({ href, label }) => (
           <a key={href} href={href} onClick={onClose} className="text-[15px] text-[#1d1d1f] py-3 font-medium border-b border-black/[0.04] last:border-0">{label}</a>
         ))}
-        <a href="tel:+13613158585" className="mt-3 inline-flex items-center justify-center gap-2 bg-[#f5f5f7] text-[#1d1d1f] px-5 py-3.5 rounded-full text-[15px] font-medium min-h-[44px]">
-          <Phone className="w-4 h-4" /> (361) 315-8585
+        <a href="tel:+18186006825" className="mt-3 inline-flex items-center justify-center gap-2 bg-[#f5f5f7] text-[#1d1d1f] px-5 py-3.5 rounded-full text-[15px] font-medium min-h-[44px]">
+          <Phone className="w-4 h-4" /> (818) 600-6825
         </a>
-        <a href="#book" onClick={onClose} className="mt-2 inline-flex items-center justify-center gap-2 bg-[#0071e3] text-white px-5 py-3.5 rounded-full text-[15px] font-medium min-h-[44px]">
-          Book Now
+        <a href="https://cal.com/simplytech.ai/discovery" target="_blank" rel="noopener noreferrer" onClick={onClose} className="mt-2 inline-flex items-center justify-center gap-2 bg-[#0071e3] text-white px-5 py-3.5 rounded-full text-[15px] font-medium min-h-[44px]">
+          Book Discovery Call
         </a>
       </nav>
     </motion.div>
@@ -262,10 +262,10 @@ function EmailCapture() {
             <span className="text-[12px] font-medium text-[#0071e3]">Free resource</span>
           </div>
           <h2 className="text-[24px] sm:text-[30px] font-semibold tracking-tight text-[#1d1d1f] mb-3">
-            Get the free AI Quick-Start Checklist
+            Free: Business AI Readiness Guide
           </h2>
           <p className="text-[14px] sm:text-[16px] text-[#86868b] mb-7 max-w-md mx-auto">
-            10 things you can do with Perplexity AI today — even if you've never used AI before. Sent straight to your inbox.
+            10 ways your team can use Perplexity AI starting today — with real examples for LA businesses. Sent straight to your inbox.
           </p>
           {status === 'done' ? (
             <div className="flex items-center justify-center gap-2 text-[#34c759] font-medium text-[15px]">
@@ -340,12 +340,12 @@ function HeroOrb() {
 
 function HeroHeadline() {
   const shouldReduceMotion = useReducedMotion();
-  const words = ['Finally', '—', 'AI', 'that', 'someone', 'actually', 'sets', 'up', 'for', 'you.'];
+  const words = ['We', 'install', 'Perplexity', 'AI', 'at', 'your', 'office.'];
   if (shouldReduceMotion) {
     return (
       <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.07 }}
         className="text-[40px] sm:text-[52px] lg:text-[60px] font-semibold tracking-tight leading-[1.05] text-[#1d1d1f] max-w-3xl mx-auto">
-        Finally — AI that someone actually sets up for you.
+        We install Perplexity AI at your office.
       </motion.h1>
     );
   }
@@ -355,7 +355,7 @@ function HeroHeadline() {
         <motion.span key={i}
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.07 + i * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
-          className={`inline-block mr-[0.25em] ${i >= 5 ? 'text-[#86868b]' : ''}`}
+          className={`inline-block mr-[0.25em] ${i >= 6 ? 'text-[#86868b]' : ''}`}
         >{word}</motion.span>
       ))}
     </h1>
@@ -382,10 +382,10 @@ const YOUTUBE_RESULTS = [
   { title: "Smooth Jazz Coffee Shop Ambience ☕", channel: "Chilled Cow", views: "12M views" },
 ];
 const STEP_LABELS = [
-  { headline: "Open Perplexity on your computer.", sub: "It's already set up and ready." },
-  { headline: "Ask it anything.", sub: "Even \"find me jazz on YouTube.\"" },
-  { headline: "It finds exactly what you want.", sub: "YouTube results, right in the answer." },
-  { headline: "One click — YouTube opens.", sub: "Set up on your computer and phone." },
+  { headline: "Book a free 15-minute discovery call.", sub: "Tell us how many computers your team uses." },
+  { headline: "We come to your office.", sub: "Usually within the week — no disruption to your workflow." },
+  { headline: "Perplexity installed on every computer.", sub: "Complete setup done in under an hour." },
+  { headline: "Your team is AI-ready.", sub: "On every computer — and every phone if you want." },
 ];
 
 function LaptopScreen({ typedQuery, bulletStage, glowActive, showYoutube }: {
@@ -650,7 +650,7 @@ function DeviceDemo() {
       <section id="how" className="bg-[#1d1d1f] py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 text-white text-center">
           <p className="text-[12px] font-semibold uppercase tracking-widest text-white/40 mb-3">How It Works</p>
-          <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight mb-10">See it in action.</h2>
+          <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight mb-10">Four steps. Under an hour.</h2>
           <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <LaptopScreen typedQuery={DEMO_QUERY} bulletStage={3} glowActive={true} showYoutube={true} />
             <PhoneScreen showYoutube={true} />
@@ -666,7 +666,7 @@ function DeviceDemo() {
         <div className="flex flex-col items-center max-w-4xl w-full">
           <div className="text-center mb-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30 mb-3">How It Works</p>
-            <h2 className="text-[32px] lg:text-[40px] font-semibold tracking-tight text-white">See it in action.</h2>
+            <h2 className="text-[32px] lg:text-[40px] font-semibold tracking-tight text-white">Four steps. Under an hour.</h2>
           </div>
           <div className="text-center mb-4 min-h-[60px] flex flex-col items-center justify-center">
             <AnimatePresence mode="wait">
@@ -703,8 +703,8 @@ function DeviceDemo() {
       <div className="md:hidden py-12 px-5">
         <div className="text-center mb-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30 mb-3">How It Works</p>
-          <h2 className="text-[26px] font-semibold tracking-tight text-white">See it in action.</h2>
-          <p className="text-white/40 text-[14px] mt-2">Set up on your computer and your phone.</p>
+          <h2 className="text-[26px] font-semibold tracking-tight text-white">Four steps. Under an hour.</h2>
+          <p className="text-white/40 text-[14px] mt-2">From discovery call to AI-ready office.</p>
         </div>
         <div className="flex items-end justify-center gap-3 mb-3">
           <div className="w-[210px] shrink-0">
@@ -785,7 +785,7 @@ export function Landing() {
             {[{ href: '#pricing', label: 'Pricing' },{ href: '#how', label: 'How It Works' },{ href: '#faq', label: 'FAQ' }].map(({ href, label }) => (
               <a key={href} href={href} className="text-[13px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">{label}</a>
             ))}
-            <a href="#book" className="bg-[#0071e3] text-white px-4 py-1.5 rounded-full text-[13px] font-medium hover:bg-[#0077ED] transition-colors min-h-[32px] inline-flex items-center">Book Now</a>
+            <a href="https://cal.com/simplytech.ai/discovery" target="_blank" rel="noopener noreferrer" className="bg-[#0071e3] text-white px-4 py-1.5 rounded-full text-[13px] font-medium hover:bg-[#0077ED] transition-colors min-h-[32px] inline-flex items-center">Discovery Call</a>
           </div>
           <button onClick={() => setMobileNavOpen(o => !o)} className="sm:hidden flex items-center justify-center w-10 h-10 text-[#1d1d1f]" aria-label="Toggle menu">
             {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -801,14 +801,14 @@ export function Landing() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           className="inline-flex items-center gap-2 bg-[#f5f5f7] rounded-full px-4 py-1.5 mb-5">
           <MapPin className="w-3.5 h-3.5 text-[#0071e3]" strokeWidth={2} />
-          <span className="text-[12px] font-medium text-[#86868b]">Serving Los Angeles & Remote Nationwide</span>
+          <span className="text-[12px] font-medium text-[#86868b]">Serving LA Businesses In-Person</span>
         </motion.div>
 
         <HeroHeadline />
 
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.14, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-[17px] sm:text-[19px] text-[#86868b] mt-5 sm:mt-6 max-w-xl mx-auto leading-relaxed px-2">
-          We come to you, install Perplexity AI on your computer and your phone — so you're set up everywhere you actually use it. No tech skills needed.
+          We come to your office and set up Perplexity AI on every computer in under an hour — no disruption, no IT headaches. Your team is productive immediately.
         </motion.p>
 
         {/* CTA — magnetic buttons */}
@@ -816,11 +816,11 @@ export function Landing() {
           className="mt-7 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4 sm:px-0">
           <MagneticButton href="#book"
             className="inline-flex items-center justify-center gap-2 bg-[#0071e3] text-white px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-[#0077ED] transition-colors min-h-[52px] sm:min-h-[44px]">
-            Book Your Install <ArrowRight className="w-4 h-4" />
+            Book a Free Discovery Call <ArrowRight className="w-4 h-4" />
           </MagneticButton>
-          <MagneticButton href="tel:+13613158585"
+          <MagneticButton href="tel:+18186006825"
             className="inline-flex items-center justify-center gap-2 text-[#0071e3] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-[#0071e3]/5 transition-colors border border-[#0071e3]/20 min-h-[52px] sm:min-h-[44px]">
-            <Phone className="w-4 h-4" /> (361) 315-8585
+            <Phone className="w-4 h-4" /> (818) 600-6825
           </MagneticButton>
         </motion.div>
 
@@ -830,7 +830,7 @@ export function Landing() {
           {[
             { to: 500, suffix: '+', label: 'Setups done' },
             { to: 5, suffix: '.0★', label: 'Google rating' },
-            { to: 1, suffix: ' hr', label: 'Avg. visit' },
+            { to: 1, suffix: ' hr', label: 'Avg. office visit' },
           ].map((stat) => (
             <div key={stat.label} className="flex items-center gap-3 bg-[#f5f5f7] rounded-2xl px-5 py-3 border border-black/[0.05]">
               <span className="text-[17px] font-semibold text-[#1d1d1f] tracking-tight tabular-nums">
@@ -845,7 +845,7 @@ export function Landing() {
       {/* ── Trust Bar ── */}
       <section className="bg-[#f5f5f7] py-5 sm:py-6">
         <div className="max-w-4xl mx-auto px-5 sm:px-6 flex items-center justify-center gap-x-4 gap-y-2 sm:gap-10 flex-wrap">
-          {['Trusted AI tools only','Privacy configured','In-person or remote','No subscriptions'].map((item) => (
+          {['Perplexity AI certified setup','Privacy & security configured','In-person at your LA office','Flat one-time fee — no subscriptions'].map((item) => (
             <div key={item} className="flex items-center gap-2">
               <Check className="w-4 h-4 text-[#34c759]" strokeWidth={2.5} />
               <span className="text-[12px] sm:text-[13px] font-medium text-[#6e6e73]">{item}</span>
@@ -858,16 +858,16 @@ export function Landing() {
       <section className="bg-gradient-to-b from-white to-[#f5f5f7] w-full py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-5 sm:px-6">
           <RevealDiv className="text-center">
-            <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-[#1d1d1f] mb-3 sm:mb-4">What we set up for you.</h2>
+            <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-[#1d1d1f] mb-3 sm:mb-4">Who is this for?</h2>
             <p className="text-[15px] sm:text-[17px] text-[#86868b] mb-10 sm:mb-12 max-w-lg mx-auto">
-              We specialize in Perplexity AI — the smartest, most useful AI tool for everyday people.
+              Any LA-area business that wants smarter research — without the IT overhead.
             </p>
           </RevealDiv>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {[
-              { icon: <Search className="w-6 h-6 text-[#0071e3]" strokeWidth={1.8} />, iconBg: 'bg-[#0071e3]/10', name: 'Perplexity AI', desc: "Ask any question, get a clear answer with real sources. Like Google, but it actually understands what you're asking." },
-              { icon: <Zap className="w-6 h-6 text-[#f59e0b]" strokeWidth={1.8} />, iconBg: 'bg-[#f59e0b]/10', name: 'Personalized Setup', desc: 'We configure it for how you actually use your computer — shortcuts, settings, and a workflow that fits your life.' },
-              { icon: <GraduationCap className="w-6 h-6 text-[#34c759]" strokeWidth={1.8} />, iconBg: 'bg-[#34c759]/10', name: 'Hands-On Training', desc: "We don't just install and leave. We sit with you, show you the best tricks, and make sure you feel confident." },
+              { icon: <Search className="w-6 h-6 text-[#0071e3]" strokeWidth={1.8} />, iconBg: 'bg-[#0071e3]/10', name: 'Law Firms & Consultants', desc: 'Research cases, summarize documents, and draft communications in seconds. Perplexity cites its sources — critical for professional work.' },
+              { icon: <Zap className="w-6 h-6 text-[#f59e0b]" strokeWidth={1.8} />, iconBg: 'bg-[#f59e0b]/10', name: 'Real Estate & Contractors', desc: 'Pull comps, write property descriptions, research codes, and answer client questions faster than ever.' },
+              { icon: <GraduationCap className="w-6 h-6 text-[#34c759]" strokeWidth={1.8} />, iconBg: 'bg-[#34c759]/10', name: 'Medical, Dental & Retail', desc: 'Look up policies, supplier info, and patient FAQs instantly. Save your front desk hours every single week.' },
             ].map((product, i) => (
               <RevealDiv key={product.name} delay={i * 0.07}>
                 <TiltCard className="h-full">
@@ -891,7 +891,7 @@ export function Landing() {
       <section className="max-w-5xl mx-auto px-5 sm:px-6 py-16 sm:py-20">
         <RevealDiv className="text-center mb-10 sm:mb-12">
           <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-[#1d1d1f] mb-3">What our customers say.</h2>
-          <p className="text-[15px] sm:text-[17px] text-[#86868b] max-w-md mx-auto">Real people from the LA area. No tech background required.</p>
+          <p className="text-[15px] sm:text-[17px] text-[#86868b] max-w-md mx-auto">Real LA businesses. Real results. No tech background required.</p>
         </RevealDiv>
 
         <RevealDiv delay={0.05} className="flex items-center justify-center gap-6 sm:gap-10 flex-wrap mb-10 sm:mb-12">
@@ -936,8 +936,8 @@ export function Landing() {
       <section id="pricing" className="bg-[#f5f5f7] py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-5 sm:px-6">
           <RevealDiv className="text-center mb-10 sm:mb-12">
-            <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-[#1d1d1f] mb-3 sm:mb-4">Simple pricing.</h2>
-            <p className="text-[15px] sm:text-[17px] text-[#86868b]">One visit. One fee. No monthly charges from us.</p>
+            <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-tight text-[#1d1d1f] mb-3 sm:mb-4">Simple, per-computer pricing.</h2>
+            <p className="text-[15px] sm:text-[17px] text-[#86868b]">Most offices of 3–5 people pay $600–$1,500 for a complete AI setup.</p>
           </RevealDiv>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {tiers.map((tier, i) => (
@@ -946,20 +946,19 @@ export function Landing() {
                   <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}
                     className={`relative rounded-3xl p-5 sm:p-7 h-full overflow-visible ${tier.popular ? 'bg-[#1d1d1f] text-white ring-1 ring-[#1d1d1f]' : 'bg-white border border-black/[0.06]'}`}>
                     {tier.popular && <PricingPulseRing />}
-                    {(tier.savings || tier.popular) && (
-                      <span className={`text-[10px] font-bold uppercase tracking-widest mb-4 block truncate ${tier.savings ? 'text-[#34c759]' : 'text-[#0071e3]'}`}>
-                        {tier.savings ?? 'Most popular'}
+                    {tier.popular && (
+                      <span className="text-[10px] font-bold uppercase tracking-widest mb-4 block truncate text-[#0071e3]">
+                        Most popular
                       </span>
                     )}
                     <h3 className={`text-[13px] font-semibold uppercase tracking-wider ${tier.popular ? 'text-white/50' : 'text-[#86868b]'}`}>{tier.name}</h3>
                     <div className="flex items-baseline gap-2 mt-2">
                       <p className="text-[36px] sm:text-[42px] font-semibold tracking-tight leading-none">${tier.price}</p>
-                      {tier.originalPrice && <span className={`text-[16px] font-normal line-through ${tier.popular ? 'text-white/30' : 'text-[#bbb]'}`}>${tier.originalPrice.toLocaleString()}</span>}
                     </div>
                     <p className={`text-[14px] mt-2 mb-5 sm:mb-7 ${tier.popular ? 'text-white/40' : 'text-[#86868b]'}`}>{tier.desc}</p>
                     <a href={`https://cal.com/simplytech.ai/${tier.slug}`} target="_blank" rel="noopener noreferrer"
                       className={`w-full block text-center py-3 rounded-full text-[14px] font-medium mb-5 sm:mb-6 transition-colors min-h-[44px] flex items-center justify-center ${tier.popular ? 'bg-[#0071e3] text-white hover:bg-[#0077ED]' : 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]'}`}>
-                      Book Now
+                      Book Discovery Call
                     </a>
                     <div className="space-y-2 sm:space-y-3">
                       {tier.features.map((f) => (
@@ -991,30 +990,30 @@ export function Landing() {
       <section id="book" className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-20">
         <RevealDiv>
           <div className="bg-[#1d1d1f] rounded-3xl p-6 sm:p-12 text-center text-white">
-            <h2 className="text-[22px] sm:text-[32px] font-semibold tracking-tight mb-3">Ready to get started?</h2>
+            <h2 className="text-[22px] sm:text-[32px] font-semibold tracking-tight mb-3">Ready to see what AI can do for your team?</h2>
             <p className="text-[14px] sm:text-[17px] text-white/50 mb-6 sm:mb-8 max-w-md mx-auto">
-              Book your Perplexity install today. We'll come to you, get everything set up, and make sure you're comfortable using it before we leave.
+              Book a free 15-minute discovery call. We'll assess your office setup, answer your questions, and give you a custom quote — no obligation.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-              <a href="tel:+13613158585" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#1d1d1f] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-white/90 transition-colors min-h-[52px] sm:min-h-[44px]">
-                <Phone className="w-4 h-4" /> (361) 315-8585
+              <a href="tel:+18186006825" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#1d1d1f] px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium hover:bg-white/90 transition-colors min-h-[52px] sm:min-h-[44px]">
+                <Phone className="w-4 h-4" /> (818) 600-6825
               </a>
-              <a href="https://cal.com/simplytech.ai" target="_blank" rel="noopener noreferrer"
+              <a href="https://cal.com/simplytech.ai/discovery" target="_blank" rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white px-7 py-4 sm:py-3.5 rounded-full text-[16px] font-medium border border-white/20 hover:bg-white/10 transition-colors min-h-[52px] sm:min-h-[44px]">
-                <Calendar className="w-4 h-4" /> Book Online
+                <Calendar className="w-4 h-4" /> Book Discovery Call
               </a>
             </div>
             <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto">
               {[
-                { name: 'Solo', price: '$279', slug: 'basic-ai-setup-300', tagline: 'Just you' },
-                { name: 'Household', price: '$449', slug: 'pro-ai-setup-500', tagline: 'Up to 3 computers' },
-                { name: 'Business', price: '$799', slug: 'premium-ai-setup-1000', tagline: 'Up to 8 devices' },
+                { name: 'Starter', price: '$199/computer', slug: 'discovery', tagline: 'Perplexity Free setup' },
+                { name: 'Pro', price: '$299/computer', slug: 'discovery', tagline: 'Perplexity Pro setup' },
+                { name: 'Phone Add-on', price: '$99/phone', slug: 'discovery', tagline: 'Mobile setup per employee' },
               ].map((tier) => (
                 <a key={tier.name} href={`https://cal.com/simplytech.ai/${tier.slug}`} target="_blank" rel="noopener noreferrer"
                   className="bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] rounded-xl p-3 sm:p-5 text-center transition-all duration-300 min-h-[44px]">
                   <p className="text-[18px] sm:text-[20px] font-semibold text-white">{tier.price}</p>
                   <p className="text-[12px] sm:text-[13px] text-white/50 mt-1">{tier.name} · {tier.tagline}</p>
-                  <p className="text-[12px] text-[#0071e3] mt-2 font-medium">Book Now</p>
+                  <p className="text-[12px] text-[#0071e3] mt-2 font-medium">Book Discovery Call</p>
                 </a>
               ))}
             </div>
@@ -1027,11 +1026,11 @@ export function Landing() {
         <div className="max-w-5xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
           <div>
             <p className="text-[13px] font-semibold text-[#1d1d1f]">Simply AI</p>
-            <p className="text-[12px] text-[#86868b] mt-0.5">AI setup for everyone. Los Angeles & remote.</p>
+            <p className="text-[12px] text-[#86868b] mt-0.5">Perplexity AI setup for LA businesses.</p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-8">
             <div className="flex items-center gap-5">
-              <a href="tel:+13613158585" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">(361) 315-8585</a>
+              <a href="tel:+18186006825" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">(818) 600-6825</a>
               <a href="mailto:hello@simplyai.tech" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">hello@simplyai.tech</a>
             </div>
             <p className="text-[12px] text-[#86868b]">© {new Date().getFullYear()} Simply AI. All rights reserved.</p>

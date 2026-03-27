@@ -9,44 +9,38 @@ const fade = (delay: number) => ({
 
 const tiers = [
   {
-    name: 'Basic',
-    price: 300,
-    desc: 'Get started with AI.',
+    name: 'Starter',
+    price: 199,
+    desc: 'Per computer. Perplexity Free, fully installed.',
     features: [
-      'Perplexity AI installed',
-      'Microsoft Copilot activated',
-      'Account setup & config',
-      '30-min walkthrough',
-      'Quick-start cheat sheet',
+      'Perplexity AI installed & configured on each computer',
+      'Account setup per user',
+      'Privacy & security settings applied',
+      'Quick-start tips sheet for each employee',
     ],
   },
   {
     name: 'Pro',
-    price: 500,
-    desc: 'The full experience.',
+    price: 299,
+    desc: 'Per computer. Full Perplexity Pro setup.',
     popular: true,
     features: [
-      'Everything in Basic',
+      'Everything in Starter',
       'Perplexity Pro (first month included)',
-      'ChatGPT setup & config',
-      'Privacy & safety hardening',
-      '1-hour training session',
-      'Custom bookmarks & tips',
-      '7-day email support',
+      'Custom shortcuts & workflow setup',
+      'Industry-specific team tips sheet',
+      'Priority scheduling',
     ],
   },
   {
-    name: 'Premium',
-    price: 1000,
-    desc: 'Total AI transformation.',
+    name: 'Phone Add-on',
+    price: 99,
+    desc: 'Per employee phone. Mobile Perplexity setup.',
     features: [
-      'Everything in Pro',
-      'Perplexity Pro + ChatGPT Plus + Copilot Pro',
-      'Up to 3 devices',
-      'Custom prompt library',
-      '2-hour deep training',
-      '30-day phone & email support',
-      'Follow-up home visit',
+      'Perplexity installed on employee phones',
+      'Mobile app configured & synced to desktop',
+      'Same account as computer setup',
+      'Add to any Starter or Pro plan',
     ],
   },
 ];
@@ -56,10 +50,10 @@ export function Pricing() {
     <div className="space-y-16">
       <section className="text-center pt-8">
         <motion.h1 {...fade(0)} className="text-[44px] font-semibold tracking-tight">
-          Simple pricing.
+          Simple, per-computer pricing.
         </motion.h1>
         <motion.p {...fade(0.06)} className="text-[17px] text-[#86868b] mt-3">
-          One visit. One fee. No subscriptions from you.
+          Most offices of 3–5 people pay $600–$1,500 for a complete AI setup.
         </motion.p>
       </section>
 
@@ -116,13 +110,13 @@ export function Pricing() {
       {/* What you keep */}
       <section className="text-center">
         <motion.h2 {...fade(0)} className="text-[28px] font-semibold tracking-tight mb-10">
-          What you keep.
+          Example office jobs.
         </motion.h2>
         <div className="grid grid-cols-3 gap-5 max-w-2xl mx-auto">
           {[
-            { label: 'Basic install', revenue: '$300', cost: '$0', profit: '$300' },
-            { label: 'Pro install', revenue: '$500', cost: '~$20', profit: '$480' },
-            { label: 'Premium install', revenue: '$1,000', cost: '~$60', profit: '$940' },
+            { label: '3 computers (Starter)', revenue: '$597', cost: '$0', profit: '$597' },
+            { label: '5 computers (Pro)', revenue: '$1,495', cost: '~$25', profit: '$1,470' },
+            { label: '5 computers + phones', revenue: '$1,990', cost: '~$25', profit: '$1,965' },
           ].map((row, i) => (
             <motion.div
               key={row.label}

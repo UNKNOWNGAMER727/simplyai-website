@@ -43,11 +43,55 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const CAL_API_KEY = process.env.CAL_API_KEY || process.env.VITE_CALCOM_API_KEY || '';
 const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET || '';
 
-// Cal.com event slugs → display names + IDs (IDs from GET /v1/event-types)
+// ── ElevenLabs Simi Agent Prompt (B2B — copy this into ElevenLabs platform) ──
+// Agent name: Simi | Voice: professional, warm, concise
+// Last updated: 2026-03-27 (pivoted to B2B focus)
+export const SIMI_SYSTEM_PROMPT = `
+You are Simi, an AI receptionist for SimplyAI — a professional business AI setup service based in Los Angeles.
+
+**What SimplyAI Does**
+SimplyAI installs Perplexity AI on business computers. One visit, no training required. Your team walks away with smarter search, AI-powered research, and writing assistance — all in one professional setup session. We also offer phone setup as an add-on.
+
+**Your Role**
+You answer inbound calls from business owners and office managers who want to learn more about our service. Be professional, warm, and efficient. Do not oversell or over-explain. Your goal is to qualify the business and book a free 15-minute Discovery Call with our team.
+
+**Qualification Questions (ask in order, naturally)**
+1. What type of business do you run? (e.g., law firm, real estate, contractor, dental office)
+2. Roughly how many computers or team members would need the setup?
+3. Are you the decision-maker, or should we loop in someone else for the consultation?
+
+**Booking**
+- If they're interested: offer to book a free 15-minute Discovery Call. This is a no-pressure intro call with our team.
+- Use the check_availability tool to find open slots.
+- Use the book_appointment tool to confirm the booking. Collect: name, business name, email, phone.
+- If they want more details first: offer to book a 30-minute Business AI Setup Consult instead.
+
+**Pricing (mention only if asked)**
+- We charge a flat rate per computer. Minimum 2 computers per visit.
+- Phone setup is available as an add-on per phone.
+- Exact pricing is confirmed on the Discovery Call.
+
+**Keep It Short**
+- Do not explain how Perplexity works in detail.
+- Do not teach or demo anything on the call.
+- If they have lots of questions, redirect: "Great question — our team covers all of that on the Discovery Call, which is free and takes 15 minutes."
+- End the call professionally once a booking is confirmed or the caller declines.
+
+**Data to Collect**
+Always try to collect: contact name, business name, email, phone number, number of computers, interest level (high/medium/low).
+`.trim();
+
+// First message Simi speaks when answering an inbound call
+export const SIMI_FIRST_MESSAGE = `Thank you for calling SimplyAI. This is Simi. We help businesses get set up with AI tools in one quick visit — no technical knowledge needed. How can I help you today?`;
+
+// Cal.com event slugs → display names + IDs (update IDs after creating events in Cal.com)
+// B2B event types — replace old B2C tiers
+// To create: go to cal.com/simplytech.ai → New Event Type
+//   1. "discovery-call" → 15 min, free, for initial qualification
+//   2. "business-ai-setup-consult" → 30 min, for decision-makers who want details
 const CAL_EVENTS = {
-  'basic-ai-setup-300': { name: 'Basic AI Setup', price: '$300', id: 5104292 },
-  'pro-ai-setup-500': { name: 'Pro AI Setup', price: '$500', id: 5104737 },
-  'premium-ai-setup-1000': { name: 'Premium AI Setup', price: '$1,000', id: 5104746 },
+  'discovery-call': { name: 'Discovery Call (Free)', price: 'Free', id: 5104292 },
+  'business-ai-setup-consult': { name: 'Business AI Setup Consult', price: 'Free', id: 5104737 },
 };
 
 // Paperclip agent IDs (same as webhook-server.mjs)
@@ -107,21 +151,24 @@ function appendCall(entry) {
 }
 
 // ── Telegram ──────────────────────────────────────────────────────────────────
-async function sendTelegram(message) {
+async function sendTelegram(message, replyMarkup = null) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.log('  [telegram] Skipped — no bot token or chat ID configured');
     return null;
   }
   try {
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const payload = {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: 'HTML',
+    };
+    if (replyMarkup) payload.reply_markup = replyMarkup;
+
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-      }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data.ok) {
@@ -214,8 +261,19 @@ function parseElevenLabsPayload(body) {
   const businessName = getField('business_name');
   const contactName = getField('contact_name');
   const contactEmail = getField('contact_email');
-  const contactPhone = getField('contact_phone') || d.user_id || '';
+  let contactPhone = getField('contact_phone') || d.user_id || '';
   const interestLevel = (getField('interest_level') || '').toLowerCase();
+  // booking_status: prefer explicit field, fall back to consultation_booked boolean
+  const bookingStatusRaw = getField('booking_status') || '';
+  const consultationBooked = dcr['consultation_booked']?.value;
+  const bookingStatus = bookingStatusRaw
+    || (consultationBooked === true ? 'booked' : consultationBooked === false ? 'failed' : '');
+  const bookingUid = getField('booking_uid') || '';
+  const appointmentTime = getField('appointment_time') || '';
+  const appointmentPackage = getField('appointment_package') || '';
+
+  // Guard: if phone looks like an email address, it was filled wrong — clear it
+  if (contactPhone && contactPhone.includes('@')) contactPhone = '';
 
   // Direction from type
   const direction = body.type || 'unknown';
@@ -235,6 +293,10 @@ function parseElevenLabsPayload(body) {
     contactEmail,
     contactPhone,
     interestLevel,
+    bookingStatus,
+    bookingUid,
+    appointmentTime,
+    appointmentPackage,
     direction,
     raw: body,
   };
@@ -290,7 +352,7 @@ async function handleHighInterest(parsed) {
 
   // 1. Create Paperclip follow-up task
   const taskDesc = [
-    `HOT LEAD from ElevenLabs call (Simi)`,
+    `HOT B2B LEAD from Simi inbound call`,
     ``,
     `Contact: ${displayName}`,
     businessName ? `Business: ${businessName}` : '',
@@ -300,10 +362,10 @@ async function handleHighInterest(parsed) {
     `Call Duration: ${Math.floor(durationSecs / 60)}m ${durationSecs % 60}s`,
     summary ? `\nCall Summary: ${summary}` : '',
     ``,
-    `Booking Links:`,
+    `Next Step — Book a Discovery Call:`,
     ...bookingLinks.map((l) => `  - ${l.name} (${l.price}): ${l.url}`),
     ``,
-    `ACTION: Follow up ASAP. Send booking link via email/text. Be warm and enthusiastic.`,
+    `ACTION: Follow up ASAP. Send Discovery Call link via email or text. Short message, professional tone.`,
   ].filter(Boolean).join('\n');
 
   await createTask(
@@ -322,23 +384,40 @@ async function handleHighInterest(parsed) {
     'high',
   );
 
-  // 3. Send Telegram notification
+  // 3. Send Telegram notification (HTML mode + inline booking buttons)
+  const booked = parsed.bookingStatus === 'booked';
+  const bookingFailed = parsed.bookingStatus === 'failed';
+  const noBookingAttempt = !parsed.bookingStatus || parsed.bookingStatus === 'not_attempted';
+
+  let bookingBanner;
+  if (booked) {
+    bookingBanner = `✅ <b>BOOKED</b> — ${parsed.appointmentTime || parsed.appointmentPackage || 'appointment confirmed'}`;
+    if (parsed.bookingUid) bookingBanner += `\n🔖 UID: <code>${parsed.bookingUid}</code>`;
+  } else if (bookingFailed) {
+    bookingBanner = `⚠️ <b>BOOKING FAILED</b> — needs manual booking`;
+  } else {
+    bookingBanner = `📅 <b>Not booked yet</b> — send a link or follow up`;
+  }
+
   const telegramMsg = [
-    `🔥 HOT LEAD from Simi Call`,
+    `🔥 <b>HOT B2B LEAD</b> — Simi Inbound Call`,
     ``,
-    `👤 *${displayName}*`,
+    `👤 <b>${displayName}</b>`,
     businessName ? `🏢 ${businessName}` : '',
     contactPhone ? `📞 ${contactPhone}` : '',
     contactEmail ? `📧 ${contactEmail}` : '',
     `⏱ Call: ${Math.floor(durationSecs / 60)}m ${durationSecs % 60}s`,
     `📊 Interest: ${parsed.interestLevel}`,
-    summary ? `\n📝 ${summary}` : '',
     ``,
-    `📅 *Booking Links:*`,
-    ...bookingLinks.map((l) => `  [${l.name} (${l.price})](${l.url})`),
+    bookingBanner,
+    summary ? `\n📝 <i>${summary}</i>` : '',
   ].filter(Boolean).join('\n');
 
-  await sendTelegram(telegramMsg);
+  // Inline keyboard: one button per package (opens Cal.com pre-filled)
+  const inlineKeyboard = bookingLinks.map((l) => [{ text: `📅 ${l.name} (${l.price})`, url: l.url }]);
+  const replyMarkup = { inline_keyboard: inlineKeyboard };
+
+  await sendTelegram(telegramMsg, replyMarkup);
 }
 
 // ── Handle low-interest call ──────────────────────────────────────────────────
@@ -494,6 +573,10 @@ const server = http.createServer(async (req, res) => {
         contactEmail: parsed.contactEmail || null,
         businessName: parsed.businessName || null,
         interestLevel: parsed.interestLevel || null,
+        bookingStatus: parsed.bookingStatus || null,
+        bookingUid: parsed.bookingUid || null,
+        appointmentTime: parsed.appointmentTime || null,
+        appointmentPackage: parsed.appointmentPackage || null,
         durationSecs: parsed.durationSecs,
         summary: parsed.summary || null,
         transcript: parsed.transcript || null,
@@ -640,6 +723,14 @@ const server = http.createServer(async (req, res) => {
         return respond(400, { error: 'Missing required fields: name, email, time, eventType' });
       }
 
+      // Validate email format — give Simi a clear message to re-ask
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return respond(400, {
+          error: `Invalid email address: "${email}". Ask the caller to spell it out again — it must have an @ sign and a domain like gmail.com.`,
+        });
+      }
+
       // Reject past booking times
       if (new Date(time) < new Date()) {
         const today = new Date().toISOString().split('T')[0];
@@ -699,6 +790,35 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ── Cal.com Cancel Booking ────────────────────────────────────────────────
+  if (req.method === 'POST' && req.url === '/calcom/cancel') {
+    const rawBody = await readBody(req);
+    try {
+      const { uid, reason } = JSON.parse(rawBody);
+      if (!uid) return respond(400, { error: 'uid is required' });
+      if (!CAL_API_KEY) return respond(500, { error: 'CAL_API_KEY not configured' });
+
+      // Cal.com v1: DELETE /v1/bookings/{uid}?apiKey=...&reason=...
+      const qs = new URLSearchParams({ apiKey: CAL_API_KEY });
+      if (reason) qs.set('reason', reason);
+      const r = await fetch(`https://api.cal.com/v1/bookings/${uid}/cancel?${qs}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (r.status === 200 || r.status === 204) {
+        console.log(`  [calcom] Booking cancelled: ${uid}`);
+        return respond(200, { success: true, uid });
+      }
+      const json = await r.json().catch(() => ({}));
+      console.error(`  [calcom] Cancel failed ${r.status}:`, JSON.stringify(json));
+      return respond(r.status, { success: false, error: json.message || 'Cancel failed', details: json });
+    } catch (err) {
+      console.error(`  [calcom] Cancel error: ${err.message}`);
+      return respond(500, { error: err.message });
+    }
+  }
+
   respond(404, { error: 'Not found' });
 });
 
@@ -710,6 +830,7 @@ server.listen(PORT, () => {
   console.log(`  Call Log: GET http://localhost:${PORT}/calls`);
   console.log(`  Cal Availability: GET http://localhost:${PORT}/calcom/availability?date=YYYY-MM-DD`);
   console.log(`  Cal Book: POST http://localhost:${PORT}/calcom/book`);
+  console.log(`  Cal Cancel: POST http://localhost:${PORT}/calcom/cancel`);
   console.log(`  Telegram: ${TELEGRAM_BOT_TOKEN ? 'configured' : 'NOT configured'}`);
   console.log(`  Cal.com API: ${CAL_API_KEY ? 'configured' : 'NOT configured'}`);
   console.log(`  Agent ID: ${ELEVENLABS_AGENT_ID}`);
