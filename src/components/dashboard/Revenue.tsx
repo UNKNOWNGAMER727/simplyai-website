@@ -12,9 +12,9 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 const TIER_PRICES: Record<string, number> = {
-  basic: 149,
-  pro: 249,
-  premium: 349,
+  basic: 199,
+  pro: 299,
+  premium: 99,
 };
 
 // -- Helpers ------------------------------------------------------------------
@@ -30,6 +30,26 @@ function formatDate(iso: string): string {
 // -- Component ----------------------------------------------------------------
 
 export function Revenue() {
+  function handleExportCSV() {
+    if (revenueEntries.length === 0) return;
+    const headers = ['Client', 'Tier', 'Amount', 'Date', 'Status'];
+    const rows = revenueEntries.map((e) => [
+      e.clientName,
+      e.tier,
+      String(e.amount),
+      e.date,
+      e.status,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simplyai-revenue-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // Show empty state when no revenue data exists
   if (revenueEntries.length === 0) {
     return (
@@ -37,7 +57,11 @@ export function Revenue() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold tracking-tight">Revenue</h2>
-          <button className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+          <button
+            onClick={handleExportCSV}
+            disabled
+            className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-gray-600 cursor-not-allowed"
+          >
             Export CSV
           </button>
         </div>
@@ -75,7 +99,7 @@ export function Revenue() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold tracking-tight">Revenue</h2>
-        <button onClick={() => { /* TODO: CSV export */ }} className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+        <button onClick={handleExportCSV} className="px-4 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
           Export CSV
         </button>
       </div>

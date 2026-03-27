@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 import type { Client } from '../../types/crm';
 import { clients as allClients, clientTimelines } from '../../data/mockData';
 import { EmptyState } from '../ui/EmptyState';
+import { useToast } from '../ui/Toast';
 
 const tierColors: Record<Client['serviceTier'], string> = {
   basic: '#0071e3',
@@ -31,6 +32,7 @@ export function Clients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
+  const { toast } = useToast();
 
   // Show empty state when no clients exist
   if (allClients.length === 0) {
@@ -80,7 +82,7 @@ export function Clients() {
         />
         <button
           type="button"
-          onClick={() => { /* TODO: Add client form */ }}
+          onClick={() => toast('Add Client form — feature coming soon')}
           className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-80"
           style={{ backgroundColor: '#0071e3' }}
         >
@@ -190,7 +192,7 @@ export function Clients() {
                 <div className="flex gap-2">
                   <DetailActionButton label="Call" color="#34c759" onClick={() => window.open(`tel:${selectedClient.phone}`)} />
                   <DetailActionButton label="Email" color="#0071e3" onClick={() => window.open(`mailto:${selectedClient.email}`)} />
-                  <DetailActionButton label="Edit" color="#ff9f0a" onClick={() => { /* TODO: edit form */ }} />
+                  <DetailActionButton label="Edit" color="#ff9f0a" onClick={() => toast('Client edit form — feature coming soon')} />
                 </div>
               </div>
 
@@ -249,6 +251,20 @@ export function Clients() {
                   className="w-full rounded-xl border border-neutral-800 bg-[#111] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-[#0071e3] transition-colors resize-none"
                   placeholder="Add notes about this client..."
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const key = `client-notes-${selectedClient.id}`;
+                      localStorage.setItem(key, editingNotes);
+                    } catch { /* localStorage unavailable */ }
+                    toast('Notes saved locally');
+                  }}
+                  className="mt-2 rounded-lg px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: '#34c759' }}
+                >
+                  Save Notes
+                </button>
               </div>
             </div>
           </motion.div>
